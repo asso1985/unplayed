@@ -150,3 +150,29 @@ router.post('/cron/run', async (_req, res: Response) => {
     res.status(500).json({ error: (err as Error).message });
   }
 });
+
+// ── Debug YTM (remove after testing) ─────────────────────────────────────────
+router.get('/debug/ytm', async (_req, res: Response) => {
+  const tokens = oauthStore.load();
+  if (!tokens) { res.json({ error: 'No tokens' }); return; }
+  
+  const r = await fetch('https://music.youtube.com/youtubei/v1/browse?alt=json', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokens.accessToken}`,
+      'X-Goog-AuthUser': '0',
+      'Accept': '*/*',
+      'Origin': 'https://music.youtube.com',
+      'x-origin': 'https://music.youtube.com',
+      'Referer': 'https://music.youtube.com/',
+    },
+    body: JSON.stringify({
+      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240101.01.00', hl: 'en', gl: 'US' } },
+      browseId: 'FEmusic_liked_albums'
+    }),
+  });
+  
+  const text = await r.text();
+  res.json({ status: r.status, body: text.slice(0, 2000) });
+});
