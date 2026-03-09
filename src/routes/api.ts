@@ -168,7 +168,14 @@ router.get('/debug/ytm', async (_req, res: Response) => {
   const tokenData = await infoRes.json();
 
   const body = JSON.stringify({
-    context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240101.01.00', hl: 'en', gl: 'US' } },
+    context: { 
+      client: { 
+        clientName: 'TVHTML5',
+        clientVersion: '7.20240101.00.00',
+        hl: 'en',
+        gl: 'US'
+      } 
+    },
     browseId: 'FEmusic_liked_albums'
   });
 
