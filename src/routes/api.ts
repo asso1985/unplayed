@@ -151,6 +151,11 @@ router.post('/cron/run', async (_req, res: Response) => {
   }
 });
 
+router.get('/debug/token', async (_req, res: Response) => {
+  const tokens = oauthStore.load();
+  res.json({ accessToken: tokens?.accessToken });
+});
+
 // ── Debug YTM (remove after testing) ─────────────────────────────────────────
 router.get('/debug/ytm', async (_req, res: Response) => {
   const tokens = oauthStore.load();
