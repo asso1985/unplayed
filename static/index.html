@@ -55,14 +55,13 @@ body {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border);
   display: flex;
-  align-items: flex-end;
-  padding: env(safe-area-inset-top, 0px) 16px 12px;
+  align-items: center;
+  padding: env(safe-area-inset-top, 0px) 16px 0;
   gap: 8px;
   z-index: 100;
 }
 
 .hdr-logo { display: flex; align-items: center; gap: 9px; }
-.hdr-logo img { width: 30px; height: 30px; border-radius: 7px; }
 .hdr-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
 .hdr-title em { color: var(--accent); font-style: normal; }
 .hdr-spacer { flex: 1; }
@@ -339,7 +338,6 @@ body {
 
   <header id="header">
     <div class="hdr-logo">
-      <img src="/logo.svg" alt="">
       <span class="hdr-title">un<em>played</em></span>
     </div>
     <div class="hdr-spacer"></div>
