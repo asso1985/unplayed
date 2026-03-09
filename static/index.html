@@ -40,6 +40,7 @@ body {
   overflow: hidden;
   position: fixed;
   width: 100%;
+  background-color: #0a0a0f;
 }
 
 /* ─── App shell ─── */
@@ -106,8 +107,8 @@ body {
   border-top: 1px solid var(--border);
   display: flex;
   align-items: flex-start;
-  padding-top: 6px;
-  padding-bottom: env(safe-area-inset-bottom, 16px);
+  padding-top: 8px;
+  padding-bottom: max(env(safe-area-inset-bottom), 20px);
 }
 
 .tab-btn {
