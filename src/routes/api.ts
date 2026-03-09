@@ -150,3 +150,15 @@ router.post('/cron/run', async (_req, res: Response) => {
     res.status(500).json({ error: (err as Error).message });
   }
 });
+
+// ── Test push (remove after testing) ─────────────────────────────────────────
+router.post('/push/test', async (_req, res: Response) => {
+  const { sendPush } = await import('../push');
+  const fakeAlbum = {
+    id: 'test', title: 'Test Album', artist: 'Test Artist', year: '2024',
+    thumbnail: '', releaseType: 'Album' as const, savedAt: new Date().toISOString(),
+    snoozedUntil: null, silenced: false, remindersSent: []
+  };
+  await sendPush(fakeAlbum, '🎵 Test notification', 'Unplayed push notifications are working!');
+  res.json({ ok: true });
+});
