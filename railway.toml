@@ -7,10 +7,5 @@ name = "unplayed-web"
 startCommand = "npm start"
 
 [services.variables]
-PORT = "3000"
-
-[[services]]
-name = "unplayed-cron"
-# Every 6 hours: syncs library + fires due reminders
-cronSchedule = "0 */6 * * *"
-startCommand = "npm run cron"
+PORT = "8080"
+DATA_DIR = "/data"
