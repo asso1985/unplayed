@@ -4,14 +4,14 @@ import { initPush } from './push';
 import { router as api } from './routes/api';
 
 const app  = express();
-const PORT = process.env['PORT'] ?? 3000;
+const PORT = Number(process.env['PORT'] ?? 3000);
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../static')));
+app.use(express.static(path.join(__dirname, '..', 'static')));
 app.use('/api', api);
 app.get('*', (_req, res) =>
-  res.sendFile(path.join(__dirname, '../static/index.html'))
+  res.sendFile(path.join(__dirname, '..', 'static', 'index.html'))
 );
 
 initPush();
-app.listen(Number(PORT), '0.0.0.0', () => console.log(`🎵 Unplayed on http://0.0.0.0:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => console.log(`🎵 Unplayed on http://0.0.0.0:${PORT}`));
