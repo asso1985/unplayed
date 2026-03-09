@@ -156,21 +156,23 @@ router.get('/debug/ytm', async (_req, res: Response) => {
   const tokens = oauthStore.load();
   if (!tokens) { res.json({ error: 'No tokens' }); return; }
   
-  const r = await fetch('https://music.youtube.com/youtubei/v1/browse?alt=json', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${tokens.accessToken}`,
-      'X-Goog-AuthUser': '0',
-      'Accept': '*/*',
-      'Origin': 'https://music.youtube.com',
-      'x-origin': 'https://music.youtube.com',
-      'Referer': 'https://music.youtube.com/',
-    },
-    body: JSON.stringify({
-      context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240101.01.00', hl: 'en', gl: 'US' } },
-      browseId: 'FEmusic_liked_albums'
-    }),
+  const body = JSON.stringify({
+    context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240101.01.00', hl: 'en', gl: 'US' } },
+    browseId: 'FEmusic_liked_albums'
+  });
+
+  const headers = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${tokens.accessToken}`,
+    'X-Goog-AuthUser': '0',
+    'Accept': '*/*',
+    'Origin': 'https://music.youtube.com',
+    'x-origin': 'https://music.youtube.com',
+  };
+
+  // Try the googleapis.com endpoint instead
+  const r = await fetch('https://youtubei.googleapis.com/youtubei/v1/browse', {
+    method: 'POST', headers, body,
   });
   
   const text = await r.text();
