@@ -1,5 +1,6 @@
 export type ReleaseType = 'Album' | 'EP' | 'Single' | 'Unknown';
 
+
 export interface Album {
   id: string;           // YTM browseId
   title: string;
@@ -30,7 +31,14 @@ export interface PushSub {
   keys: { p256dh: string; auth: string };
 }
 
+export interface Settings {
+  reminderDays: number[];
+  allowedTypes: ReleaseType[];
+  notifyHour: number;
+}
+
 export const DEFAULT_SETTINGS: Settings = {
   reminderDays:  [3, 7, 30],
-  allowedTypes:  ['Album'],   // EPs and Singles off by default
+  allowedTypes:  ['Album'],
+  notifyHour:    19,
 };

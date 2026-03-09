@@ -82,8 +82,14 @@ async function main() {
   }
 
   // ── 3. Reminders ────────────────────────────────────────────────────────────
-  const { sent, skipped } = await runReminders();
-  console.log(`✓ Reminders — ${sent} sent, ${skipped} skipped`);
+  const currentHour = new Date().getUTCHours();
+  const notifyHour  = db.load().settings.notifyHour ?? 19;
+  if (currentHour === notifyHour) {
+    const { sent, skipped } = await runReminders();
+    console.log(`✓ Reminders — ${sent} sent, ${skipped} skipped`);
+  } else {
+    console.log(`✓ Reminders — skipped (current=${currentHour} UTC, notify=${notifyHour} UTC)`);
+  }
 }
 
 export { main };

@@ -106,9 +106,10 @@ router.get('/settings', (_req, res: Response) => {
 });
 
 router.post('/settings', (req: Request, res: Response) => {
-  const { reminderDays, allowedTypes } = req.body as {
+  const { reminderDays, allowedTypes, notifyHour } = req.body as {
     reminderDays?: unknown;
     allowedTypes?: unknown;
+    notifyHour?: unknown;
   };
   if (!Array.isArray(reminderDays) || !reminderDays.every(d => typeof d === 'number' && d > 0)) {
     res.status(400).json({ error: 'reminderDays must be an array of positive numbers' });
@@ -123,9 +124,16 @@ router.post('/settings', (req: Request, res: Response) => {
     res.status(400).json({ error: 'Select at least one release type' });
     return;
   }
+
+  if (notifyHour !== undefined && (typeof notifyHour !== 'number' || notifyHour < 0 || notifyHour > 23)) {
+    res.status(400).json({ error: 'notifyHour must be 0-23' });
+    return;
+  }
+
   const data = db.load();
   data.settings.reminderDays = (reminderDays as number[]).slice(0, 5).sort((a, b) => a - b);
   data.settings.allowedTypes = allowedTypes as import('../types').ReleaseType[];
+  if (notifyHour !== undefined) data.settings.notifyHour = notifyHour as number;
   db.save(data);
   res.json({ ok: true, settings: data.settings });
 });
