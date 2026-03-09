@@ -1,7 +1,7 @@
 /**
  * ytmusic.ts
- * Minimal inline YT Music client — fetches liked/saved albums only.
- * No external dependencies, just native fetch (Node 18+).
+ * Fetches liked/saved albums from YT Music using OAuth Bearer token.
+ * Uses the TVHTML5 client which accepts standard OAuth tokens.
  */
 
 export type ReleaseType = 'Album' | 'EP' | 'Single' | 'Unknown';
@@ -15,70 +15,43 @@ export interface YTMAlbum {
   releaseType: ReleaseType;
 }
 
-// (header-paste auth removed — see oauth.ts for device flow)
-
-/** Safely pluck a nested value from YTM's deeply nested JSON */
-function nav(obj: unknown, ...path: string[]): unknown {
+/** Safely pluck a nested value */
+function nav(obj: unknown, ...path: (string | number)[]): unknown {
   let cur = obj;
   for (const key of path) {
     if (cur == null || typeof cur !== 'object') return undefined;
-    cur = (cur as Record<string, unknown>)[key];
+    cur = (cur as Record<string | number, unknown>)[key];
   }
   return cur;
 }
 
-function firstText(runs: unknown): string {
-  if (!Array.isArray(runs) || !runs.length) return '';
-  return String(nav(runs[0], 'text') ?? '');
+function str(v: unknown): string {
+  return typeof v === 'string' ? v : '';
 }
 
-function joinRuns(runs: unknown): string {
-  if (!Array.isArray(runs)) return '';
-  return runs.map((r: unknown) => String(nav(r, 'text') ?? '')).join('');
+function parseReleaseType(raw: string): { releaseType: ReleaseType; year: string } {
+  // Format: "Album • 2026" or "EP • 2024" or "Single • 2023"
+  const parts = raw.split('•').map(s => s.trim());
+  const typeRaw = parts[0]?.trim() ?? '';
+  const year = parts[1]?.trim() ?? '';
+  const releaseType = (['Album', 'EP', 'Single'].includes(typeRaw) ? typeRaw : 'Unknown') as ReleaseType;
+  return { releaseType, year };
 }
 
-function bestThumb(thumbnails: unknown): string {
-  if (!Array.isArray(thumbnails) || !thumbnails.length) return '';
-  const last = thumbnails[thumbnails.length - 1];
-  return String(nav(last, 'url') ?? '');
-}
-
-function parseAlbumItem(item: unknown): YTMAlbum | null {
+function parseTileRenderer(tile: unknown): YTMAlbum | null {
   try {
-    const mrlire = nav(item, 'musicTwoRowItemRenderer') as Record<string, unknown>;
-    if (!mrlire) return null;
+    const meta = nav(tile, 'metadata', 'tileMetadataRenderer');
+    const title = str(nav(meta, 'title', 'runs', 0, 'text'));
+    const browseId = str(nav(meta, 'title', 'runs', 0, 'navigationEndpoint', 'browseEndpoint', 'browseId'));
+    if (!browseId || !title) return null;
 
-    const browseId = String(
-      nav(mrlire, 'navigationEndpoint', 'browseEndpoint', 'browseId') ?? ''
-    );
-    if (!browseId) return null;
+    const artist = str(nav(meta, 'lines', 0, 'lineRenderer', 'items', 0, 'lineItemRenderer', 'text', 'simpleText'));
+    const line2 = str(nav(meta, 'lines', 1, 'lineRenderer', 'items', 0, 'lineItemRenderer', 'text', 'simpleText'));
+    const { releaseType, year } = parseReleaseType(line2);
 
-    const title = firstText(nav(mrlire, 'title', 'runs'));
-    const subtitleRuns = nav(mrlire, 'subtitle', 'runs');
-    // Subtitle format: ["Album", " • ", "Artist", " • ", "2023"]
-    let artist = '';
-    let year = '';
-    let releaseType: ReleaseType = 'Unknown';
-    if (Array.isArray(subtitleRuns)) {
-      const texts = subtitleRuns.map((r: unknown) => String(nav(r, 'text') ?? ''));
-      const parts = texts.filter(t => t.trim() && t.trim() !== '\u2022' && t.trim() !== '•');
-      // 3+ parts: type • artist • year
-      if (parts.length >= 3) {
-        const raw = parts[0].trim();
-        releaseType = (['Album', 'EP', 'Single'].includes(raw) ? raw : 'Unknown') as ReleaseType;
-        artist = parts[parts.length - 2] ?? '';
-        year   = parts[parts.length - 1] ?? '';
-      } else if (parts.length === 2) {
-        artist = parts[0] ?? '';
-        year   = parts[1] ?? '';
-      } else if (parts.length === 1) {
-        artist = parts[0] ?? '';
-      }
-    }
-
-    const thumbnail = bestThumb(
-      nav(mrlire, 'thumbnailRenderer', 'musicThumbnailRenderer', 'thumbnail', 'thumbnails')
-    );
+    const thumbnails = nav(tile, 'header', 'tileHeaderRenderer', 'thumbnail', 'thumbnails');
+    const thumbArr = Array.isArray(thumbnails) ? thumbnails : [];
+    const thumbnail = str(nav(thumbArr[thumbArr.length - 1], 'url'));
 
     return { browseId, title, artist, year, thumbnail, releaseType };
   } catch {
@@ -123,33 +96,42 @@ export async function getLibraryAlbums(
     if (!res.ok) throw new Error(`YTM API error: ${res.status} ${res.statusText}`);
     const json = await res.json() as unknown;
 
-    // Extract items — location differs on first vs continuation pages
+    // First page: navigate to the Albums tab (selected:true) gridRenderer items
     let items: unknown[] = [];
     if (!continuation) {
-      const grid = nav(
-        json,
-        'contents', 'singleColumnBrowseResultsRenderer', 'tabs', '0',
-        'tabRenderer', 'content', 'sectionListRenderer', 'contents', '0',
-        'gridRenderer', 'items'
-      );
-      items = Array.isArray(grid) ? grid : [];
+      const sections = nav(json, 'contents', 'tvBrowseRenderer', 'content',
+        'tvSecondaryNavRenderer', 'sections', 0,
+        'tvSecondaryNavSectionRenderer', 'tabs') as unknown[];
+
+      if (Array.isArray(sections)) {
+        for (const tab of sections) {
+          const selected = nav(tab, 'tabRenderer', 'selected');
+          if (selected) {
+            const grid = nav(tab, 'tabRenderer', 'content', 'tvSurfaceContentRenderer',
+              'content', 'gridRenderer', 'items');
+            if (Array.isArray(grid)) items = grid;
+            break;
+          }
+        }
+      }
     } else {
-      const contItems = nav(json, 'continuationContents', 'gridContinuation', 'items');
-      items = Array.isArray(contItems) ? contItems : [];
+      // Continuation page
+      const grid = nav(json, 'continuationContents', 'gridContinuation', 'items');
+      if (Array.isArray(grid)) items = grid;
     }
 
     for (const item of items) {
-      const parsed = parseAlbumItem(item);
+      const tile = nav(item, 'tileRenderer');
+      if (!tile) continue;
+      const parsed = parseTileRenderer(tile);
       if (parsed) albums.push(parsed);
     }
 
-    // Check for next page token
-    const token = nav(
-      json,
-      'continuations', '0', 'nextContinuationData', 'continuation'
-    ) ?? nav(
-      json,
-      'continuationContents', 'gridContinuation', 'continuations', '0',
+    // Check for next page
+    const token = nav(json,
+      'continuations', 0, 'nextContinuationData', 'continuation'
+    ) ?? nav(json,
+      'continuationContents', 'gridContinuation', 'continuations', 0,
       'nextContinuationData', 'continuation'
     );
     continuation = typeof token === 'string' ? token : null;
