@@ -81,14 +81,14 @@ body {
 
 #tabbar {
   flex-shrink: 0;
-  background: rgba(10,10,15,0.95);
+  background: rgba(10, 10, 15, 0.95);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-top: 1px solid var(--border);
   display: flex;
-  align-items: flex-start;
-  padding-top: 4px;
+  align-items: center;
   padding-bottom: 0;
+  height: 58px;
 }
 
 .tab-btn {
