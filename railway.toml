@@ -1,11 +1,8 @@
 [build]
-builder = "nixpacks"
+builder = "NIXPACKS"
 buildCommand = "npm install && npm run build"
 
-[[services]]
-name = "unplayed-web"
-startCommand = "npm start"
-
-[services.variables]
-PORT = "8080"
-DATA_DIR = "/data"
+[deploy]
+startCommand = "node dist/server.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
