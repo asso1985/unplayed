@@ -2,16 +2,15 @@
 
 Push notification reminders for your liked YouTube Music albums.
 
-**Stack:** Node.js · Express · TypeScript · Railway  
-**No external API library** — one inline function calls YTM directly.
+**Stack:** React · Vite · Express · SQLite · TypeScript · Railway
 
 ---
 
 ## How it works
 
-1. A Railway cron job runs every 6 hours
-2. It pulls your liked albums from YT Music using your saved browser session
-3. New albums get added to the db
+1. An in-process cron job runs every 6 hours
+2. It pulls each user's liked albums from YT Music via Google OAuth
+3. New albums get added to the SQLite database
 4. Any albums past their reminder threshold get a push notification
 5. You open the notification → taps into the official YT Music app
 
@@ -19,6 +18,61 @@ Push notification reminders for your liked YouTube Music albums.
 - **Open in YT Music** — launches the album
 - **Snooze 3 days** — skips reminders for 3 days
 - **Stop reminding** — silences this album forever
+
+---
+
+## Project structure
+
+```
+unplayed/
+├── client/             # React + Vite frontend
+│   ├── src/
+│   ├── public/         # PWA assets (manifest, service worker, icons)
+│   ├── package.json
+│   └── vite.config.ts
+├── server/             # Express + SQLite backend
+│   ├── src/
+│   ├── package.json
+│   └── tsconfig.json
+├── client-dist/        # Vite build output (gitignored)
+├── railway.json        # Railway deployment config
+└── Procfile
+```
+
+---
+
+## Local development
+
+### 1. Install dependencies
+
+```bash
+cd server && npm install
+cd ../client && npm install
+```
+
+### 2. Create `server/.env`
+
+```env
+DATA_DIR="."
+GOOGLE_CLIENT_ID="your-client-id"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+VAPID_PUBLIC_KEY="your-vapid-public-key"
+VAPID_PRIVATE_KEY="your-vapid-private-key"
+VAPID_EMAIL="mailto:you@example.com"
+PORT="3000"
+```
+
+### 3. Run both servers
+
+```bash
+# Terminal 1 — Express API
+cd server && npm run dev
+
+# Terminal 2 — Vite dev server (proxies /api to :3000)
+cd client && npm run dev
+```
+
+Open `http://localhost:5173` in your browser.
 
 ---
 
@@ -43,14 +97,13 @@ git init && git add . && git commit -m "init"
 gh repo create unplayed --private --push
 ```
 
-### 3. New Railway project
-Railway dashboard → New Project → Deploy from GitHub → select your repo
+### 4. New Railway project
 
-Railway reads `railway.toml` and creates two services:
-- `unplayed-web` — Express server (always on)
-- `unplayed-cron` — runs `npm run cron` every 6 hours
+Railway dashboard → New Project → Deploy from GitHub → select your repo.
 
-### 4. Environment variables (set on BOTH services)
+Railway reads `railway.json` for build/start commands. Single service — no separate cron needed (runs in-process via `node-cron`).
+
+### 5. Environment variables
 
 | Key | Value |
 |---|---|
@@ -61,11 +114,11 @@ Railway reads `railway.toml` and creates two services:
 | `VAPID_EMAIL` | `mailto:you@example.com` |
 | `DATA_DIR` | `/data` |
 
-### 5. Shared volume
-Railway → `unplayed-web` → Volumes → Add → mount path `/data`  
-Then attach the same volume to `unplayed-cron` at `/data`
+### 6. Persistent volume
 
-Both services share `data.json`, `push_subscriptions.json`, and `auth.json`.
+Railway → your service → Volumes → Add → mount path `/data`
+
+The SQLite database (`unplayed.db`) lives on this volume.
 
 ---
 
@@ -75,22 +128,28 @@ Both services share `data.json`, `push_subscriptions.json`, and `auth.json`.
 2. Click **Get login code** — you'll see an 8-character code
 3. Open [google.com/device](https://google.com/device) on any device and enter the code
 4. Sign in with your Google account (the one with your YT Music library)
-5. The app auto-detects approval and connects — no more cookie pasting, ever
+5. The app auto-detects approval and connects
 6. On iPhone: tap Share → **Add to Home Screen**
-4. Open the installed app → tap **Enable notifications**
-5. Done — the next cron run will sync your library
+7. Open the installed app → tap **Enable notifications**
+8. Done — the next cron run will sync your library
+
+---
+
+## Migrating from JSON to SQLite
+
+If upgrading from an older version that used JSON files:
+
+```bash
+DATA_DIR=/data node server/dist/scripts/migrate-json.js
+```
+
+This imports `data.json`, `auth.json`, and `push_subscriptions.json` into SQLite. Safe to re-run — skips if users already exist.
 
 ---
 
 ## Settings
 
-Tap ⚙ Settings in the app to change the reminder schedule.  
-Default: day 3, day 7, day 30. Set any days you like.
-
-## Adjusting cron frequency
-
-Edit `railway.toml`:
-```toml
-cronSchedule = "0 */6 * * *"   # every 6h (default)
-cronSchedule = "0 9 * * *"     # daily at 9am UTC
-```
+Tap ⚙ Settings in the app to configure:
+- **Reminder schedule** — default: day 3, day 7, day 30
+- **Track types** — Albums, EPs, Singles
+- **Notification time** — Morning, Afternoon, or Evening
