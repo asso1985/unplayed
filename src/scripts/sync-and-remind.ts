@@ -88,4 +88,8 @@ async function main() {
   process.exit(0);
 }
 
-main().catch(err => { console.error('Cron fatal:', err); process.exit(1); });
+export { main };
+// Only auto-run if called directly
+if (require.main === module) {
+  main().catch(err => { console.error('Cron fatal:', err); process.exit(1); });
+}

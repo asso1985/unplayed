@@ -1,7 +1,6 @@
-console.log('SERVER STARTING', new Date().toISOString(), 'PORT:', process.env['PORT']);
-
 import express from 'express';
 import path from 'path';
+import cron from 'node-cron';
 import { initPush } from './push';
 import { router as api } from './routes/api';
 
@@ -16,4 +15,12 @@ app.get('*', (_req, res) =>
 );
 
 initPush();
+
+// Run sync + reminders every 6 hours
+cron.schedule('0 */6 * * *', async () => {
+  console.log('Running scheduled sync...');
+  const { main } = await import('./scripts/sync-and-remind');
+  await main();
+});
+
 app.listen(PORT, '0.0.0.0', () => console.log(`🎵 Unplayed on http://0.0.0.0:${PORT}`));
