@@ -1,0 +1,6 @@
+node_modules/
+dist/
+data.json
+push_subscriptions.json
+auth.json
+.env

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Unplayed</title>
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#0a0a0f">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Unplayed">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" type="image/svg+xml" href="/logo.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0a0f; --surf: #13131a; --surf2: #1c1c27;
+  --border: #2a2a38; --accent: #e8ff47; --red: #ff6b6b;
+  --green: #6bffb8; --text: #f0f0f8; --muted: #6060a0;
+  --safe-b: env(safe-area-inset-bottom, 0px);
+}
+html, body { min-height: 100%; background: var(--bg); color: var(--text); font-family: 'Syne', sans-serif; }
+
+/* noise overlay */
+body::before { content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: .4; }
+
+.wrap { max-width: 860px; margin: 0 auto; padding: 28px 18px calc(36px + var(--safe-b)); }
+
+/* ── Header ── */
+header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; gap: 12px; }
+.logo-row { display: flex; align-items: center; gap: 13px; }
+.logo-img { width: 48px; height: 48px; border-radius: 11px; }
+.logo-text { font-size: 26px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+.logo-text em { color: var(--accent); font-style: normal; }
+.tagline { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted); letter-spacing: 2.5px; text-transform: uppercase; margin-bottom: 2px; }
+.hdr-right { display: flex; align-items: center; gap: 10px; }
+.dot-row { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; }
+.dot-g { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.dot-r { background: var(--red);   box-shadow: 0 0 5px var(--red); }
+
+/* ── Buttons ── */
+.btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600; transition: all .15s; text-decoration: none; white-space: nowrap; }
+.btn-accent { background: var(--accent); color: #0a0a0f; }
+.btn-accent:hover { background: #d0e83a; transform: translateY(-1px); }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn-icon { padding: 8px 10px; border-radius: 8px; font-size: 14px; }
+.btn-sm { padding: 7px 14px; font-size: 12px; border-radius: 8px; }
+.btn:disabled { opacity: .35; cursor: not-allowed; transform: none !important; }
+
+/* ── Info bars ── */
+.bar { background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 15px; margin-bottom: 12px; display: flex; align-items: center; gap: 10px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.bar-push    { border-left: 3px solid var(--green); }
+.bar-install { border-left: 3px solid var(--accent); }
+
+/* ── Setup panel ── */
+.panel { background: var(--surf); border: 1px solid var(--border); border-radius: 16px; padding: 30px; margin-bottom: 24px; }
+.panel h2 { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+.panel p  { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); line-height: 1.8; margin-bottom: 20px; }
+ol.steps { list-style: none; counter-reset: s; margin-bottom: 20px; }
+ol.steps li { counter-increment: s; padding: 9px 0 9px 38px; position: relative; font-size: 12px; color: var(--muted); font-family: 'DM Mono', monospace; border-bottom: 1px solid var(--border); line-height: 1.7; }
+ol.steps li:last-child { border-bottom: none; }
+ol.steps li::before { content: counter(s); position: absolute; left: 0; top: 9px; width: 24px; height: 24px; background: var(--surf2); border: 1px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: var(--accent); }
+ol.steps a { color: var(--accent); text-decoration: none; }
+ol.steps code { background: var(--surf2); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+textarea { width: 100%; height: 110px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 12px; padding: 12px; resize: vertical; outline: none; margin-bottom: 12px; transition: border-color .2s; }
+textarea:focus { border-color: var(--accent); }
+
+/* ── Settings panel ── */
+.settings-panel { background: var(--surf); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 24px; }
+.settings-panel h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; }
+.reminder-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+.reminder-row { display: flex; align-items: center; gap: 10px; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.reminder-row input[type=number] { width: 64px; background: var(--bg); border: 1px solid var(--border); border-radius: 7px; color: var(--text); font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; padding: 6px 8px; outline: none; text-align: center; transition: border-color .2s; }
+.reminder-row input[type=number]:focus { border-color: var(--accent); }
+.btn-del { background: transparent; border: none; color: var(--muted); cursor: pointer; font-size: 15px; padding: 2px 4px; line-height: 1; opacity: .6; }
+.btn-del:hover { opacity: 1; color: var(--red); }
+.check-row { display: flex; align-items: center; gap: 10px; cursor: pointer; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text); }
+.check-row input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--accent); cursor: pointer; }
+.check-row .check-label { flex: 1; }
+.check-row .check-desc { color: var(--muted); font-size: 11px; }
+.add-row { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); cursor: pointer; display: inline-flex; align-items: center; gap: 5px; opacity: .7; }
+.add-row:hover { opacity: 1; color: var(--accent); }
+
+/* ── Album grid ── */
+.grid-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 18px; }
+.album-count { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); }
+.album-count strong { font-size: 20px; font-family: 'Syne', sans-serif; font-weight: 800; color: var(--accent); margin-right: 4px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+
+.card { background: var(--surf); border: 1px solid var(--border); border-radius: 13px; overflow: hidden; transition: transform .18s, border-color .18s, opacity .3s; position: relative; }
+.card:hover { transform: translateY(-2px); }
+.card.silencing { opacity: 0; transform: scale(.94); }
+
+.thumb { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surf2); }
+.thumb-ph { width: 100%; aspect-ratio: 1; background: var(--surf2); display: flex; align-items: center; justify-content: center; font-size: 38px; color: var(--muted); }
+
+.badge { position: absolute; top: 8px; right: 8px; padding: 3px 8px; border-radius: 20px; font-size: 9px; font-family: 'DM Mono', monospace; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; }
+.badge-due    { background: var(--accent); color: #0a0a0f; }
+.badge-snooze { background: var(--surf2);  color: var(--muted); border: 1px solid var(--border); }
+
+.card-info { padding: 12px 14px 6px; }
+.card-title  { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
+.release-type { display: inline-block; font-size: 9px; font-family: 'DM Mono', monospace; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; background: var(--surf2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; margin-right: 5px; color: var(--muted); vertical-align: middle; }
+.card-artist { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card-age    { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 5px; opacity: .45; }
+
+.card-actions { padding: 6px 14px 13px; display: flex; gap: 6px; align-items: center; }
+.btn-ytm { flex: 1; justify-content: center; background: var(--surf2); border: 1px solid var(--border); color: var(--text); font-size: 11px; padding: 8px 10px; }
+.btn-ytm:hover { border-color: #ff3333; color: #ff5555; background: #180808; }
+.btn-ytm svg { width: 12px; height: 12px; flex-shrink: 0; }
+
+/* snooze popover */
+.snooze-wrap { position: relative; }
+.snooze-pop { position: absolute; bottom: calc(100% + 6px); right: 0; background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; padding: 6px; display: none; flex-direction: column; gap: 3px; z-index: 100; min-width: 130px; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
+.snooze-pop.open { display: flex; }
+.snooze-opt { background: transparent; border: none; color: var(--text); font-family: 'DM Mono', monospace; font-size: 11px; padding: 7px 10px; text-align: left; cursor: pointer; border-radius: 7px; white-space: nowrap; }
+.snooze-opt:hover { background: var(--border); }
+
+/* empty */
+.empty { text-align: center; padding: 60px 20px; color: var(--muted); grid-column: 1/-1; }
+.empty-icon { font-size: 48px; margin-bottom: 12px; opacity: .3; }
+.empty h3 { font-size: 17px; color: var(--text); margin-bottom: 5px; }
+.empty p { font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.7; }
+
+/* toast */
+.toast { position: fixed; bottom: calc(20px + var(--safe-b)); left: 50%; transform: translateX(-50%) translateY(70px); z-index: 9998; background: var(--surf2); border: 1px solid var(--border); border-radius: 10px; padding: 11px 18px; font-size: 12px; font-family: 'DM Mono', monospace; white-space: nowrap; opacity: 0; transition: all .22s; }
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.ok  { border-left: 3px solid var(--green); }
+.toast.err { border-left: 3px solid var(--red); }
+
+.spin { display: inline-block; width: 13px; height: 13px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .65s linear infinite; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (max-width: 460px) {
+  .logo-text { font-size: 22px; } .logo-img { width: 40px; height: 40px; }
+  .grid { grid-template-columns: 1fr 1fr; gap: 9px; }
+  .card-actions { flex-wrap: wrap; }
+  .btn-ytm { font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="logo-row">
+      <img src="/logo.svg" alt="Unplayed" class="logo-img">
+      <div>
+        <div class="tagline">Album reminder</div>
+        <div class="logo-text">un<em>played</em></div>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <div class="dot-row" id="auth-dot">…</div>
+      <button class="btn btn-ghost btn-sm" onclick="toggleSettings()" id="settings-btn" style="display:none">⚙ Settings</button>
+      <button class="btn btn-ghost btn-sm" onclick="disconnect()" id="disconnect-btn" style="display:none;color:var(--muted);font-size:11px">disconnect</button>
+    </div>
+  </header>
+
+  <!-- Setup -->
+  <div id="setup" style="display:none">
+    <div class="panel">
+      <h2>Connect YouTube Music</h2>
+      <p>One-time setup. Unplayed uses Google's official device login — no passwords, no copy-pasting cookies. The connection auto-renews forever.</p>
+
+      <!-- Step 1: start flow -->
+      <div id="auth-step-start">
+        <ol class="steps">
+          <li>Make sure you have a Google Cloud project with the YouTube Data API enabled and a <strong>TV &amp; Limited Input</strong> OAuth client ID set in your env vars</li>
+          <li>Click the button below to get your login code</li>
+        </ol>
+        <button class="btn btn-accent" onclick="startAuth()" id="start-auth-btn">Get login code</button>
+      </div>
+
+      <!-- Step 2: enter code -->
+      <div id="auth-step-code" style="display:none">
+        <p style="margin-bottom:20px">Open <a id="verify-url" href="https://google.com/device" target="_blank" style="color:var(--accent)">google.com/device</a> on any device and enter this code:</p>
+        <div style="text-align:center;margin:28px 0">
+          <div id="user-code" style="font-family:'DM Mono',monospace;font-size:40px;font-weight:700;letter-spacing:8px;color:var(--accent)">——</div>
+          <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:10px">Waiting for approval<span id="poll-dots">…</span></div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7">
+          Sign in with the Google account that has your YouTube Music library. The code expires in <span id="code-expiry">10</span> minutes.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Install bar -->
+  <div class="bar bar-install" id="bar-install" style="display:none">
+    <span>📲</span>
+    <span id="install-msg" style="flex:1">Add Unplayed to your home screen to receive push notifications</span>
+    <button class="btn btn-accent btn-sm" id="install-btn" onclick="installPWA()">Add</button>
+    <button class="btn btn-ghost btn-sm" onclick="this.closest('.bar').style.display='none'">✕</button>
+  </div>
+
+  <!-- Push bar -->
+  <div class="bar bar-push" id="bar-push" style="display:none">
+    <span>🔔</span>
+    <span style="flex:1">Enable push notifications to get reminders on this device</span>
+    <button class="btn btn-ghost btn-sm" onclick="enablePush()">Enable</button>
+    <button class="btn btn-ghost btn-sm" onclick="this.closest('.bar').style.display='none'">✕</button>
+  </div>
+
+  <!-- Settings -->
+  <div id="settings-panel" style="display:none">
+    <div class="settings-panel">
+      <h3>
+        Reminder schedule
+        <button class="btn btn-accent btn-sm" onclick="saveSettings()">Save</button>
+      </h3>
+      <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7">
+        Send a push notification after this many days of saving an album:
+      </p>
+      <div class="reminder-rows" id="reminder-rows"></div>
+      <span class="add-row" onclick="addReminderRow()">+ add reminder</span>
+
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border)">
+        <div style="font-size:13px;font-weight:700;margin-bottom:10px">Remind me about</div>
+        <div style="display:flex;flex-direction:column;gap:8px" id="type-checkboxes">
+          <!-- rendered by JS -->
+        </div>
+        <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:10px;line-height:1.6">
+          Changes apply to new likes only — already-saved items are not affected.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div id="main" style="display:none">
+    <div class="grid-header">
+      <div class="album-count"><strong id="count">0</strong>albums to listen to</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── State ─────────────────────────────────────────────────────────────────────
+let albums = [], settings = { reminderDays: [3, 7, 30] }, vapidKey = '', deferredInstall = null;
+
+const ytLogo = `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>`;
+
+// ── PWA install ───────────────────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredInstall = e;
+  document.getElementById('bar-install').style.display = 'flex';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('bar-install').style.display = 'none';
+  toast('✓ Added to home screen', 'ok');
+});
+async function installPWA() {
+  if (!deferredInstall) return;
+  deferredInstall.prompt();
+  await deferredInstall.userChoice;
+  deferredInstall = null;
+  document.getElementById('bar-install').style.display = 'none';
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  const status = await fetch('/api/status').then(r => r.json());
+  vapidKey = status.pushKey ?? '';
+
+  document.getElementById('auth-dot').innerHTML = status.authReady
+    ? '<span class="dot dot-g"></span> Connected'
+    : '<span class="dot dot-r"></span> Not connected';
+
+  if (!status.authReady) {
+    document.getElementById('setup').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('settings-btn').style.display = '';
+  document.getElementById('disconnect-btn').style.display = '';
+  document.getElementById('main').style.display = 'block';
+  await loadAlbums();
+  checkPrompts();
+}
+
+// ── Auth — device flow ────────────────────────────────────────────────────────
+let pollTimer = null;
+let pollInterval = 5000;
+let expiryTimer = null;
+
+async function startAuth() {
+  const btn = document.getElementById('start-auth-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Starting…';
+  try {
+    const r = await fetch('/api/auth/start', { method: 'POST' });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+
+    document.getElementById('user-code').textContent = d.userCode;
+    document.getElementById('verify-url').href = d.verificationUrl;
+    document.getElementById('verify-url').textContent = d.verificationUrl;
+    document.getElementById('code-expiry').textContent = Math.round(d.expiresIn / 60);
+    document.getElementById('auth-step-start').style.display = 'none';
+    document.getElementById('auth-step-code').style.display = 'block';
+
+    pollInterval = (d.interval || 5) * 1000;
+    startPolling();
+  } catch(e) {
+    btn.disabled = false;
+    btn.innerHTML = 'Get login code';
+    toast(e.message, 'err');
+  }
+}
+
+function startPolling() {
+  let dots = 0;
+  const dotEl = document.getElementById('poll-dots');
+  pollTimer = setInterval(async () => {
+    dots = (dots + 1) % 4;
+    if (dotEl) dotEl.textContent = '.'.repeat(dots + 1);
+    try {
+      const r = await fetch('/api/auth/poll', { method: 'POST' });
+      const d = await r.json();
+      if (d.status === 'approved') {
+        clearInterval(pollTimer);
+        toast('✓ Connected to YouTube Music!', 'ok');
+        setTimeout(() => location.reload(), 900);
+      } else if (d.status === 'expired') {
+        clearInterval(pollTimer);
+        toast('Code expired — try again', 'err');
+        document.getElementById('auth-step-start').style.display = 'block';
+        document.getElementById('auth-step-code').style.display = 'none';
+        const btn = document.getElementById('start-auth-btn');
+        btn.disabled = false; btn.innerHTML = 'Get login code';
+      }
+      // 'pending' = keep polling
+    } catch(e) { /* network hiccup, keep polling */ }
+  }, pollInterval);
+}
+
+// ── Albums ────────────────────────────────────────────────────────────────────
+async function loadAlbums() {
+  const d = await fetch('/api/albums').then(r => r.json());
+  albums   = d.albums   ?? [];
+  settings = d.settings ?? settings;
+  render();
+}
+
+function render() {
+  document.getElementById('count').textContent = albums.length;
+  const grid = document.getElementById('grid');
+  if (!albums.length) {
+    grid.innerHTML = `<div class="empty"><div class="empty-icon">💿</div><h3>No albums yet</h3><p>The cron job will sync your YT Music library automatically.<br>New likes will appear here within a few hours.</p></div>`;
+    return;
+  }
+  grid.innerHTML = albums.map(a => albumCard(a)).join('');
+}
+
+function albumCard(a) {
+  const age = a.ageDays === 0 ? 'today' : a.ageDays === 1 ? 'yesterday' : `${a.ageDays}d ago`;
+  let badge = '';
+  if (a.snoozedDaysLeft > 0)   badge = `<div class="badge badge-snooze">snoozed ${a.snoozedDaysLeft}d</div>`;
+  else if (isDue(a))           badge = `<div class="badge badge-due">reminder due</div>`;
+
+  const typeTag = (a.releaseType && a.releaseType !== 'Album' && a.releaseType !== 'Unknown')
+    ? `<span class="release-type">${a.releaseType}</span>` : '';
+
+  const img = a.thumbnail
+    ? `<img class="thumb" src="${a.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
+    : '';
+  const ph = `<div class="thumb-ph" ${a.thumbnail ? 'style="display:none"' : ''}>💿</div>`;
+
+  return `<div class="card" id="c-${a.id}">
+    ${badge}${img}${ph}
+    <div class="card-info">
+      <div class="card-title" title="${esc(a.title)}">${esc(a.title)}</div>
+      <div class="card-artist">${typeTag}${esc(a.artist)}${a.year ? ' · ' + a.year : ''}</div>
+      <div class="card-age">saved ${age}</div>
+    </div>
+    <div class="card-actions">
+      <a href="https://music.youtube.com/browse/${a.id}" target="_blank" class="btn btn-ytm btn-sm">${ytLogo} YT Music</a>
+      <div class="snooze-wrap">
+        <button class="btn btn-ghost btn-icon" onclick="toggleSnooze('${a.id}', event)" title="Snooze">⏱</button>
+        <div class="snooze-pop" id="sp-${a.id}">
+          <button class="snooze-opt" onclick="snooze('${a.id}', 3)">3 days</button>
+          <button class="snooze-opt" onclick="snooze('${a.id}', 7)">1 week</button>
+          <button class="snooze-opt" onclick="snooze('${a.id}', 14)">2 weeks</button>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-icon" onclick="silence('${a.id}')" title="Stop reminding">✕</button>
+    </div>
+  </div>`;
+}
+
+function isDue(a) {
+  if (a.snoozedDaysLeft > 0) return false;
+  return settings.reminderDays.some(d => a.ageDays >= d && !a.remindersSent.includes(d));
+}
+
+function toggleSnooze(id, e) {
+  e.stopPropagation();
+  document.querySelectorAll('.snooze-pop').forEach(p => {
+    if (p.id !== `sp-${id}`) p.classList.remove('open');
+  });
+  document.getElementById(`sp-${id}`).classList.toggle('open');
+}
+document.addEventListener('click', () => document.querySelectorAll('.snooze-pop').forEach(p => p.classList.remove('open')));
+
+async function snooze(id, days) {
+  document.getElementById(`sp-${id}`)?.classList.remove('open');
+  await fetch(`/api/albums/${id}/snooze`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ days })
+  });
+  const label = days === 7 ? '1 week' : days === 14 ? '2 weeks' : `${days} days`;
+  toast(`⏱ Snoozed for ${label}`, 'ok');
+  await loadAlbums();
+}
+
+async function silence(id) {
+  const card = document.getElementById(`c-${id}`);
+  if (card) card.classList.add('silencing');
+  await new Promise(r => setTimeout(r, 280));
+  await fetch(`/api/albums/${id}/silence`, { method: 'POST' });
+  albums = albums.filter(a => a.id !== id);
+  render();
+  toast('✕ Reminder stopped', 'ok');
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+function toggleSettings() {
+  const p = document.getElementById('settings-panel');
+  const visible = p.style.display !== 'none';
+  if (!visible) renderSettingsPanel();
+  p.style.display = visible ? 'none' : 'block';
+  document.getElementById('settings-btn').textContent = visible ? '⚙ Settings' : '✕ Close';
+}
+
+function renderSettingsPanel() {
+  const rows = document.getElementById('reminder-rows');
+  rows.innerHTML = settings.reminderDays.map((d, i) => `
+    <div class="reminder-row">
+      <span>Reminder</span>
+      <input type="number" min="1" max="365" value="${d}" id="rd-${i}" oninput="syncSettingsLocal()">
+      <span>days after saving</span>
+      <button class="btn-del" onclick="removeReminderRow(${i})">×</button>
+    </div>`).join('');
+
+  const typeDescs = { Album: 'Full-length albums', EP: 'Extended plays', Single: 'Single tracks' };
+  const allowed = settings.allowedTypes ?? ['Album'];
+  document.getElementById('type-checkboxes').innerHTML = ['Album', 'EP', 'Single'].map(t => `
+    <label class="check-row">
+      <input type="checkbox" id="type-${t}" ${allowed.includes(t) ? 'checked' : ''}>
+      <span class="check-label">${t}</span>
+      <span class="check-desc">${typeDescs[t]}</span>
+    </label>`).join('');
+}
+
+function syncSettingsLocal() {
+  const inputs = document.querySelectorAll('[id^="rd-"]');
+  settings.reminderDays = [...inputs].map(i => parseInt(i.value)).filter(n => n > 0);
+}
+
+function addReminderRow() {
+  settings.reminderDays = [...settings.reminderDays, 14];
+  renderSettingsPanel();
+}
+
+function removeReminderRow(i) {
+  if (settings.reminderDays.length <= 1) { toast('Need at least one reminder', 'err'); return; }
+  settings.reminderDays.splice(i, 1);
+  renderSettingsPanel();
+}
+
+async function saveSettings() {
+  syncSettingsLocal();
+  const days = settings.reminderDays.filter(d => d > 0);
+  if (!days.length) { toast('Add at least one reminder day', 'err'); return; }
+
+  const allowedTypes = ['Album', 'EP', 'Single']
+    .filter(t => document.getElementById(`type-${t}`)?.checked);
+  if (!allowedTypes.length) { toast('Select at least one release type', 'err'); return; }
+
+  try {
+    const r = await fetch('/api/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reminderDays: days, allowedTypes })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error);
+    settings = d.settings;
+    toast('✓ Settings saved', 'ok');
+    render();
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Push ──────────────────────────────────────────────────────────────────────
+function checkPrompts() {
+  if ('Notification' in window && Notification.permission === 'default' && vapidKey)
+    document.getElementById('bar-push').style.display = 'flex';
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone = window.matchMedia('(display-mode: standalone)').matches;
+  if (isIOS && !standalone) {
+    document.getElementById('install-msg').textContent = 'On iPhone: tap the Share button → "Add to Home Screen" to get notifications';
+    document.getElementById('install-btn').style.display = 'none';
+    document.getElementById('bar-install').style.display = 'flex';
+  }
+}
+
+async function enablePush() {
+  if (!vapidKey) { toast('Push not configured on server', 'err'); return; }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permission denied', 'err'); return; }
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+    await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64(vapidKey),
+    });
+    const j = sub.toJSON();
+    await fetch('/api/push/subscribe', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ endpoint: j.endpoint, keys: j.keys }),
+    });
+    document.getElementById('bar-push').style.display = 'none';
+    toast('🔔 Notifications enabled!', 'ok');
+  } catch(e) { toast(e.message, 'err'); }
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function urlB64(s) {
+  const pad = '='.repeat((4 - s.length % 4) % 4);
+  const raw = atob((s + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+function esc(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function disconnect() {
+  if (!confirm('Disconnect YouTube Music? You will need to re-authenticate.')) return;
+  await fetch('/api/auth', { method: 'DELETE' });
+  location.reload();
+}
+
+function toast(msg, type = 'ok') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type} show`;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+init();
+</script>
+</body>
+</html>

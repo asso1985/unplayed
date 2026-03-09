@@ -1,0 +1,25 @@
+{
+  "name": "unplayed",
+  "version": "1.0.0",
+  "description": "YouTube Music album listening reminder",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "cron": "node dist/scripts/sync-and-remind.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/server.ts"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/web-push": "^3.6.3",
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.2",
+    "ts-node-dev": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
