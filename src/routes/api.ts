@@ -156,25 +156,31 @@ router.get('/debug/ytm', async (_req, res: Response) => {
   const tokens = oauthStore.load();
   if (!tokens) { res.json({ error: 'No tokens' }); return; }
   
+  // Decode token payload to check scope
+  const parts = tokens.accessToken.split('.');
+  let tokenInfo: unknown = null;
+  if (parts.length === 3) {
+    try { tokenInfo = JSON.parse(Buffer.from(parts[1]!, 'base64').toString()); } catch {}
+  }
+
+  // Check token info via Google API
+  const infoRes = await fetch(`https://www.googleapis.com/oauth2/v3/tokeninfo?access_token=${tokens.accessToken}`);
+  const tokenData = await infoRes.json();
+
   const body = JSON.stringify({
     context: { client: { clientName: 'WEB_REMIX', clientVersion: '1.20240101.01.00', hl: 'en', gl: 'US' } },
     browseId: 'FEmusic_liked_albums'
   });
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${tokens.accessToken}`,
-    'X-Goog-AuthUser': '0',
-    'Accept': '*/*',
-    'Origin': 'https://youtubei.googleapis.com',
-    'x-origin': 'https://music.youtube.com',
-  };
-
-  // Try the googleapis.com endpoint instead
   const r = await fetch('https://youtubei.googleapis.com/youtubei/v1/browse', {
-    method: 'POST', headers, body,
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokens.accessToken}`,
+    },
+    body,
   });
   
   const text = await r.text();
-  res.json({ status: r.status, body: text.slice(0, 2000) });
+  res.json({ tokenData, status: r.status, body: text.slice(0, 500) });
 });
