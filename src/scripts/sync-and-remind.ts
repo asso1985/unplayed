@@ -84,8 +84,6 @@ async function main() {
   // ── 3. Reminders ────────────────────────────────────────────────────────────
   const { sent, skipped } = await runReminders();
   console.log(`✓ Reminders — ${sent} sent, ${skipped} skipped`);
-
-  process.exit(0);
 }
 
 export { main };
