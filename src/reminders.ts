@@ -1,4 +1,4 @@
-import { db } from './store';
+import * as db from './db';
 import { sendPush } from './push';
 import { Album } from './types';
 
@@ -25,9 +25,9 @@ function reminderMessage(dayThreshold: number): { title: string; body: string } 
   return                         { title: '📀 Long time…',     body: `It's been ${dayThreshold} days. Don't let this one slip away.` };
 }
 
-export async function runReminders(): Promise<{ sent: number; skipped: number }> {
-  const data = db.load();
-  const { albums, settings } = data;
+export async function runRemindersForUser(userId: string): Promise<{ sent: number; skipped: number }> {
+  const albums = db.getAllAlbums(userId);
+  const settings = db.getSettings(userId);
   let sent = 0, skipped = 0;
 
   for (const album of albums) {
@@ -37,11 +37,11 @@ export async function runReminders(): Promise<{ sent: number; skipped: number }>
     if (due === null) { skipped++; continue; }
 
     const { title, body } = reminderMessage(due);
-    await sendPush(album, title, `${album.title} by ${album.artist} — ${body}`);
+    await sendPush(userId, album, title, `${album.title} by ${album.artist} — ${body}`);
     album.remindersSent.push(due);
+    db.updateRemindersSent(userId, album.id, album.remindersSent);
     sent++;
   }
 
-  db.save(data);
   return { sent, skipped };
 }

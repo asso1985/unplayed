@@ -5,3 +5,4 @@ push_subscriptions.json
 auth.json
 .env
 test-ytm.mjs
+.claude/worktrees/

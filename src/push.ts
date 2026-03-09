@@ -1,5 +1,5 @@
 import webpush from 'web-push';
-import { pushStore } from './store';
+import * as db from './db';
 import { Album } from './types';
 
 export function initPush(): void {
@@ -11,11 +11,12 @@ export function initPush(): void {
 }
 
 export async function sendPush(
+  userId: string,
   album: Album,
   title: string,
   body: string
 ): Promise<void> {
-  const subs = pushStore.all();
+  const subs = db.getPushSubs(userId);
   if (!subs.length) return;
 
   const payload = JSON.stringify({
@@ -36,5 +37,5 @@ export async function sendPush(
       else console.error('Push error', status, sub.endpoint.slice(0, 40));
     }
   }));
-  dead.forEach(ep => pushStore.remove(ep));
+  dead.forEach(ep => db.removePushSub(ep));
 }

@@ -1,33 +1,42 @@
 import { Router, Request, Response } from 'express';
-import fs from 'fs';
-import { db, oauthStore, pushStore, PATHS } from '../store';
-import { PushSub } from '../types';
+import * as db from '../db';
 import { daysSince } from '../reminders';
 import { startDeviceFlow, pollDeviceFlow } from '../oauth';
 
 export const router = Router();
 
-// In-memory pending device code — single user, so fine
-let pendingDeviceCode: string | null = null;
+/** Return userId or send 401. */
+function requireUser(req: Request, res: Response): string | null {
+  if (!req.userId) {
+    res.status(401).json({ error: 'Not authenticated' });
+    return null;
+  }
+  return req.userId;
+}
 
 // ── Status ────────────────────────────────────────────────────────────────────
 
-router.get('/status', (_req, res: Response) => {
-  const data = db.load();
+router.get('/status', (req: Request, res: Response) => {
+  const userId = req.userId;
+  const hasTokens = userId ? db.getTokens(userId) !== null : false;
+  const count = userId ? db.albumCount(userId) : 0;
+  const users = userId ? db.getAllUsersWithTokens() : [];
+  const lastSync = users.find(u => u.id === userId)?.lastSync ?? null;
+
   res.json({
-    authReady:  oauthStore.exists(),
-    albumCount: data.albums.filter(a => !a.silenced).length,
-    lastSync:   data.lastSync,
+    authReady:  hasTokens,
+    albumCount: count,
+    lastSync,
     pushKey:    process.env['VAPID_PUBLIC_KEY'] ?? '',
   });
 });
 
 // ── OAuth device flow ─────────────────────────────────────────────────────────
 
-router.post('/auth/start', async (_req, res: Response) => {
+router.post('/auth/start', async (req: Request, res: Response) => {
   try {
     const result = await startDeviceFlow();
-    pendingDeviceCode = result.deviceCode;
+    db.setDeviceCode(req.sessionId, result.deviceCode);
     res.json({
       userCode:        result.userCode,
       verificationUrl: result.verificationUrl,
@@ -39,73 +48,93 @@ router.post('/auth/start', async (_req, res: Response) => {
   }
 });
 
-router.post('/auth/poll', async (_req, res: Response) => {
-  if (!pendingDeviceCode) {
+router.post('/auth/poll', async (req: Request, res: Response) => {
+  const session = db.getSession(req.sessionId);
+  if (!session?.deviceCode) {
     res.status(400).json({ error: 'No auth flow in progress' });
     return;
   }
   try {
-    const result = await pollDeviceFlow(pendingDeviceCode);
+    const result = await pollDeviceFlow(session.deviceCode);
     if (result.status === 'approved') {
-      oauthStore.save(result.tokens);
-      pendingDeviceCode = null;
+      // Create user if this session doesn't have one yet
+      let userId = req.userId;
+      if (!userId) {
+        userId = db.createUser();
+        db.linkSessionToUser(req.sessionId, userId);
+        req.userId = userId;
+      }
+      db.upsertTokens(userId, result.tokens);
+      db.setDeviceCode(req.sessionId, null);
     }
-    res.json({ status: result.status, ...(result.status === 'error' && { message: (result as {message:string}).message }) });
+    res.json({
+      status: result.status,
+      ...(result.status === 'error' && { message: (result as { message: string }).message }),
+    });
   } catch (err: unknown) {
     res.status(500).json({ error: (err as Error).message });
   }
 });
 
-router.delete('/auth', (_req, res: Response) => {
-  try { fs.unlinkSync(PATHS.auth); } catch {}
-  pendingDeviceCode = null;
+router.delete('/auth', (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  db.deleteTokens(userId);
+  db.setDeviceCode(req.sessionId, null);
   res.json({ ok: true });
 });
 
 // ── Albums ────────────────────────────────────────────────────────────────────
 
-router.get('/albums', (_req, res: Response) => {
-  const data = db.load();
-  const albums = data.albums
-    .filter(a => !a.silenced)
-    .map(a => ({
-      ...a,
-      ageDays: daysSince(a.savedAt),
-      snoozedDaysLeft: a.snoozedUntil
-        ? Math.max(0, Math.ceil((new Date(a.snoozedUntil).getTime() - Date.now()) / 86_400_000))
-        : null,
-    }))
-    .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime());
-  res.json({ albums, settings: data.settings });
+router.get('/albums', (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+
+  const albums = db.getAlbums(userId).map(a => ({
+    ...a,
+    ageDays: daysSince(a.savedAt),
+    snoozedDaysLeft: a.snoozedUntil
+      ? Math.max(0, Math.ceil((new Date(a.snoozedUntil).getTime() - Date.now()) / 86_400_000))
+      : null,
+  }));
+  res.json({ albums, settings: db.getSettings(userId) });
 });
 
 router.post('/albums/:id/silence', (req: Request, res: Response) => {
-  const data = db.load();
-  const album = data.albums.find(a => a.id === req.params['id']);
-  if (!album) { res.status(404).json({ error: 'Not found' }); return; }
-  album.silenced = true;
-  db.save(data);
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  if (!db.silenceAlbum(userId, req.params['id']!)) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
   res.json({ ok: true });
 });
 
 router.post('/albums/:id/snooze', (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { days } = req.body as { days?: number };
   if (!days || days < 1) { res.status(400).json({ error: 'days required' }); return; }
-  const data = db.load();
-  const album = data.albums.find(a => a.id === req.params['id']);
-  if (!album) { res.status(404).json({ error: 'Not found' }); return; }
-  album.snoozedUntil = new Date(Date.now() + days * 86_400_000).toISOString();
-  db.save(data);
-  res.json({ ok: true, snoozedUntil: album.snoozedUntil });
+  const until = new Date(Date.now() + days * 86_400_000).toISOString();
+  if (!db.snoozeAlbum(userId, req.params['id']!, until)) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  res.json({ ok: true, snoozedUntil: until });
 });
 
 // ── Settings ──────────────────────────────────────────────────────────────────
 
-router.get('/settings', (_req, res: Response) => {
-  res.json({ settings: db.load().settings });
+router.get('/settings', (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  res.json({ settings: db.getSettings(userId) });
 });
 
 router.post('/settings', (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+
   const { reminderDays, allowedTypes, notifyHour } = req.body as {
     reminderDays?: unknown;
     allowedTypes?: unknown;
@@ -124,26 +153,29 @@ router.post('/settings', (req: Request, res: Response) => {
     res.status(400).json({ error: 'Select at least one release type' });
     return;
   }
-
   if (notifyHour !== undefined && (typeof notifyHour !== 'number' || notifyHour < 0 || notifyHour > 23)) {
     res.status(400).json({ error: 'notifyHour must be 0-23' });
     return;
   }
 
-  const data = db.load();
-  data.settings.reminderDays = (reminderDays as number[]).slice(0, 5).sort((a, b) => a - b);
-  data.settings.allowedTypes = allowedTypes as import('../types').ReleaseType[];
-  if (notifyHour !== undefined) data.settings.notifyHour = notifyHour as number;
-  db.save(data);
-  res.json({ ok: true, settings: data.settings });
+  const current = db.getSettings(userId);
+  const updated = {
+    reminderDays: (reminderDays as number[]).slice(0, 5).sort((a, b) => a - b),
+    allowedTypes: allowedTypes as import('../types').ReleaseType[],
+    notifyHour: notifyHour !== undefined ? (notifyHour as number) : current.notifyHour,
+  };
+  db.upsertSettings(userId, updated);
+  res.json({ ok: true, settings: updated });
 });
 
 // ── Push ──────────────────────────────────────────────────────────────────────
 
 router.post('/push/subscribe', (req: Request, res: Response) => {
-  const sub = req.body as PushSub;
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  const sub = req.body as import('../types').PushSub;
   if (!sub?.endpoint || !sub?.keys) { res.status(400).json({ error: 'Invalid sub' }); return; }
-  pushStore.add(sub);
+  db.addPushSub(userId, sub);
   res.json({ ok: true });
 });
 
@@ -158,14 +190,16 @@ router.post('/cron/run', async (_req, res: Response) => {
   }
 });
 
-// ── Test push (remove after testing) ─────────────────────────────────────────
-router.post('/push/test', async (_req, res: Response) => {
+// ── Test push ────────────────────────────────────────────────────────────────
+router.post('/push/test', async (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
   const { sendPush } = await import('../push');
   const fakeAlbum = {
     id: 'test', title: 'Test Album', artist: 'Test Artist', year: '2024',
     thumbnail: '', releaseType: 'Album' as const, savedAt: new Date().toISOString(),
     snoozedUntil: null, silenced: false, remindersSent: []
   };
-  await sendPush(fakeAlbum, '🎵 Test notification', 'Unplayed push notifications are working!');
+  await sendPush(userId, fakeAlbum, '🎵 Test notification', 'Unplayed push notifications are working!');
   res.json({ ok: true });
 });

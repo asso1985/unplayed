@@ -20,12 +20,6 @@ export interface Settings {
   allowedTypes: ReleaseType[];      // which release types to remind about
 }
 
-export interface AppData {
-  albums: Album[];
-  settings: Settings;
-  lastSync: string | null;
-}
-
 export interface PushSub {
   endpoint: string;
   keys: { p256dh: string; auth: string };

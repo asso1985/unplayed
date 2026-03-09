@@ -1,76 +1,82 @@
 /**
  * sync-and-remind.ts
- * Run by Railway cron every 6 hours.
- * 1. Auto-refreshes OAuth token if needed
- * 2. Pulls latest liked albums from YT Music
- * 3. Adds new ones to the db (filtered by allowedTypes)
- * 4. Fires any due push notifications
+ * Run by cron every 6 hours (in-process via node-cron).
+ * Iterates all users with OAuth tokens:
+ *   1. Auto-refreshes each user's access token
+ *   2. Pulls latest liked albums from YT Music
+ *   3. Adds new ones to the DB (filtered by allowedTypes)
+ *   4. Fires any due push notifications
  */
-import { db, oauthStore } from '../store';
+import * as db from '../db';
 import { getLibraryAlbums } from '../ytmusic';
 import { initPush, sendPush } from '../push';
-import { runReminders } from '../reminders';
+import { runRemindersForUser } from '../reminders';
 import { getValidAccessToken } from '../oauth';
 import { Album } from '../types';
+
+async function syncUser(user: { id: string; lastSync: string | null; tokens: import('../oauth').OAuthTokens }) {
+  // Auto-refresh token if expiring soon
+  let tokens = user.tokens;
+  const fresh = await getValidAccessToken(tokens);
+  if (fresh.accessToken !== tokens.accessToken) {
+    db.upsertTokens(user.id, fresh);
+    console.log(`  ✓ Token refreshed for ${user.id}`);
+    tokens = fresh;
+  }
+
+  // Sync albums
+  const fetched = await getLibraryAlbums(tokens.accessToken);
+  const settings = db.getSettings(user.id);
+  let added = 0;
+
+  for (const ytm of fetched) {
+    if (db.albumExists(user.id, ytm.browseId)) continue;
+    // Respect allowed release types
+    if (ytm.releaseType !== 'Unknown' && !settings.allowedTypes.includes(ytm.releaseType)) continue;
+
+    const album: Album = {
+      id:            ytm.browseId,
+      title:         ytm.title,
+      artist:        ytm.artist,
+      year:          ytm.year,
+      thumbnail:     ytm.thumbnail,
+      releaseType:   ytm.releaseType,
+      savedAt:       new Date().toISOString(),
+      snoozedUntil:  null,
+      silenced:      false,
+      remindersSent: [],
+    };
+    db.insertAlbum(user.id, album);
+    added++;
+  }
+
+  db.setLastSync(user.id, new Date().toISOString());
+  console.log(`  ✓ Sync — ${added} new, ${fetched.length} total in library`);
+}
 
 async function main() {
   console.log(`[${new Date().toISOString()}] Unplayed cron starting…`);
   initPush();
 
-  // ── 1. Check auth ──────────────────────────────────────────────────────────
-  if (!oauthStore.exists()) {
-    console.warn('No OAuth tokens — skipping sync. Complete setup in the app.');
-  } else {
+  const users = db.getAllUsersWithTokens();
+  if (!users.length) {
+    console.log('No users with tokens — nothing to do.');
+    return;
+  }
+
+  for (const user of users) {
+    console.log(`Processing user ${user.id}…`);
     try {
-      // Auto-refresh token if expiring soon
-      let tokens = oauthStore.load()!;
-      const fresh = await getValidAccessToken(tokens);
-      if (fresh.accessToken !== tokens.accessToken) {
-        oauthStore.save(fresh);
-        console.log('✓ Access token refreshed');
-        tokens = fresh;
-      }
-
-      // ── 2. Sync ─────────────────────────────────────────────────────────────
-      const fetched = await getLibraryAlbums(tokens.accessToken);
-      const data    = db.load();
-      const known   = new Set(data.albums.map(a => a.id));
-      let added = 0;
-
-      for (const ytm of fetched) {
-        if (known.has(ytm.browseId)) continue;
-        // Respect allowed release types
-        const allowed = data.settings.allowedTypes;
-        if (ytm.releaseType !== 'Unknown' && !allowed.includes(ytm.releaseType)) continue;
-
-        const album: Album = {
-          id:            ytm.browseId,
-          title:         ytm.title,
-          artist:        ytm.artist,
-          year:          ytm.year,
-          thumbnail:     ytm.thumbnail,
-          releaseType:   ytm.releaseType,
-          savedAt:       new Date().toISOString(),
-          snoozedUntil:  null,
-          silenced:      false,
-          remindersSent: [],
-        };
-        data.albums.push(album);
-        known.add(ytm.browseId);
-        added++;
-      }
-
-      data.lastSync = new Date().toISOString();
-      db.save(data);
-      console.log(`✓ Sync — ${added} new, ${fetched.length} total in library`);
+      await syncUser(user);
     } catch (err: unknown) {
       const msg = (err as Error).message ?? String(err);
-      console.error('Sync failed:', msg);
+      console.error(`  Sync failed for ${user.id}:`, msg);
 
-      // If it looks like an auth error, send a push notification
+      // If auth error, notify the user to re-authenticate
       if (msg.includes('401') || msg.includes('403') || msg.includes('invalid_grant')) {
-        console.log('Auth error — sending push notification to re-authenticate');
+        console.log(`  Auth error — sending push to re-authenticate`);
         await sendPush(
+          user.id,
           { id: '', title: 'Unplayed', artist: '', year: '', thumbnail: '',
             releaseType: 'Unknown', savedAt: '', snoozedUntil: null,
             silenced: false, remindersSent: [] },
@@ -79,16 +85,16 @@ async function main() {
         );
       }
     }
-  }
 
-  // ── 3. Reminders ────────────────────────────────────────────────────────────
-  const currentHour = new Date().getUTCHours();
-  const notifyHour  = db.load().settings.notifyHour ?? 19;
-  if (currentHour === notifyHour) {
-    const { sent, skipped } = await runReminders();
-    console.log(`✓ Reminders — ${sent} sent, ${skipped} skipped`);
-  } else {
-    console.log(`✓ Reminders — skipped (current=${currentHour} UTC, notify=${notifyHour} UTC)`);
+    // Reminders — only if current UTC hour matches user's notifyHour
+    const currentHour = new Date().getUTCHours();
+    const notifyHour = db.getSettings(user.id).notifyHour ?? 19;
+    if (currentHour === notifyHour) {
+      const { sent, skipped } = await runRemindersForUser(user.id);
+      console.log(`  ✓ Reminders — ${sent} sent, ${skipped} skipped`);
+    } else {
+      console.log(`  ✓ Reminders — skipped (current=${currentHour} UTC, notify=${notifyHour} UTC)`);
+    }
   }
 }
 

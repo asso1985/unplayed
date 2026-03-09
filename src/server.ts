@@ -1,13 +1,17 @@
 import express from 'express';
 import path from 'path';
+import cookieParser from 'cookie-parser';
 import cron from 'node-cron';
 import { initPush } from './push';
+import { sessionMiddleware } from './middleware/session';
 import { router as api } from './routes/api';
 
 const app  = express();
 const PORT = Number(process.env['PORT'] ?? 3000);
 
 app.use(express.json());
+app.use(cookieParser());
+app.use(sessionMiddleware);
 app.use(express.static(path.join(__dirname, '..', 'static')));
 app.use('/api', api);
 app.get('*', (_req, res) =>
