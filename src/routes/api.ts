@@ -166,7 +166,7 @@ router.get('/debug/ytm', async (_req, res: Response) => {
     'Authorization': `Bearer ${tokens.accessToken}`,
     'X-Goog-AuthUser': '0',
     'Accept': '*/*',
-    'Origin': 'https://music.youtube.com',
+    'Origin': 'https://youtubei.googleapis.com',
     'x-origin': 'https://music.youtube.com',
   };
 
