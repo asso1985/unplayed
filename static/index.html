@@ -27,7 +27,6 @@
   --text: #f0f0f8;
   --muted: #5a5a80;
   --safe-t: env(safe-area-inset-top, 0px);
-  --safe-b: env(safe-area-inset-bottom, 0px);
   --hdr: 56px;
   --tab: 49px;
 }
@@ -422,7 +421,7 @@ body {
 /* ─── Toast ─── */
 .toast {
   position: fixed;
-  bottom: calc(var(--tab) + var(--safe-b) + 10px);
+  bottom: calc(var(--tab) + env(safe-area-inset-bottom, 16px) + 10px);
   left: 50%; transform: translateX(-50%) translateY(16px);
   background: var(--surf2); border: 1px solid var(--border);
   border-radius: 18px; padding: 9px 16px;
