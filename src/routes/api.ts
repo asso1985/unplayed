@@ -190,4 +190,21 @@ router.get('/debug/ytm', async (_req, res: Response) => {
   
   const text = await r.text();
   res.json({ tokenData, status: r.status, body: text.slice(0, 500) });
+
+
+  const r2 = await fetch('https://youtubei.googleapis.com/youtubei/v1/browse', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${tokens.accessToken}`,
+      'X-Goog-AuthUser': '0',
+      'Accept': '*/*',
+    },
+    body: JSON.stringify({
+      context: { client: { clientName: 'TVHTML5', clientVersion: '7.20240101.00.00', hl: 'en', gl: 'US' } },
+      browseId: 'FEmusic_liked_albums'
+    }),
+  });
+  const full = await r2.text();
+  res.json({ status: r2.status, body: full.slice(0, 5000) });
 });
