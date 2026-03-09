@@ -1,3 +1,5 @@
+console.log('SERVER STARTING', new Date().toISOString(), 'PORT:', process.env['PORT']);
+
 import express from 'express';
 import path from 'path';
 import { initPush } from './push';
