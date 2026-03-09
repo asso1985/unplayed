@@ -105,8 +105,11 @@ export async function getLibraryAlbums(
     'Authorization': `Bearer ${accessToken}`,
     'X-Goog-AuthUser': '0',
     'Accept': '*/*',
+    'Accept-Language': 'en-US,en;q=0.9',
     'Origin': 'https://music.youtube.com',
+    'x-origin': 'https://music.youtube.com',
     'Referer': 'https://music.youtube.com/',
+    'X-Goog-Visitor-Id': '',
   };
 
   const albums: YTMAlbum[] = [];
