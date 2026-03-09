@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs';
 import { db, oauthStore, pushStore, PATHS } from '../store';
-import { getLibraryAlbums } from '../ytmusic';
-import { Album, PushSub } from '../types';
+import { PushSub } from '../types';
 import { daysSince } from '../reminders';
 import { startDeviceFlow, pollDeviceFlow } from '../oauth';
 

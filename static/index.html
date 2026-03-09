@@ -14,858 +14,452 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surf:#13131a;--surf2:#1c1c27;--surf3:#23232f;
+  --border:#2a2a38;--accent:#e8ff47;--red:#ff6b6b;--green:#6bffb8;
+  --text:#f0f0f8;--muted:#6060a0;--header-h:58px;
+  --safe-t:env(safe-area-inset-top,0px);--safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);--safe-r:env(safe-area-inset-right,0px);
+}
+html{height:100%;-webkit-text-size-adjust:100%}
+body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;-webkit-font-smoothing:antialiased;overscroll-behavior:none}
 
-:root {
-  --bg: #0a0a0f;
-  --surf: #13131a;
-  --surf2: #1c1c27;
-  --border: #2a2a38;
-  --accent: #e8ff47;
-  --red: #ff6b6b;
-  --green: #6bffb8;
-  --text: #f0f0f8;
-  --muted: #5a5a80;
-  --safe-t: env(safe-area-inset-top, 0px);
-  --hdr: 56px;
-  --tab: 49px;
-}
+/* Header */
+#app-header{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(10,10,15,0.88);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid rgba(255,255,255,0.06);padding-top:var(--safe-t)}
+.header-inner{display:flex;align-items:center;justify-content:space-between;height:var(--header-h);padding:0 16px;gap:12px}
+.logo-row{display:flex;align-items:center;gap:11px}
+.logo-img{width:36px;height:36px;border-radius:8px}
+.logo-text{font-size:22px;font-weight:800;letter-spacing:-0.8px;line-height:1}
+.logo-text em{color:var(--accent);font-style:normal}
+.hdr-right{display:flex;align-items:center;gap:8px}
+.dot-row{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-g{background:var(--green);box-shadow:0 0 5px var(--green)}
+.dot-r{background:var(--red);box-shadow:0 0 5px var(--red)}
+.icon-btn{width:36px;height:36px;border-radius:50%;background:var(--surf2);border:1px solid var(--border);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:16px;transition:background .15s,transform .1s;-webkit-tap-highlight-color:transparent;flex-shrink:0}
+.icon-btn:active{transform:scale(0.93);background:var(--surf3)}
 
-html, body { height: 100dvh; }
+/* Scroll wrap */
+#scroll-wrap{padding-top:calc(var(--header-h) + var(--safe-t));padding-bottom:calc(24px + var(--safe-b));padding-left:var(--safe-l);padding-right:var(--safe-r);min-height:100vh}
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Syne', sans-serif;
-  overflow: hidden;
-  position: fixed;
-  width: 100%;
-  background-color: #0a0a0f;
-}
+/* Banners */
+.banner{margin:12px 14px 0;background:var(--surf);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted)}
+.banner-install{border-left:3px solid var(--accent)}
+.banner-push{border-left:3px solid var(--green)}
+.banner-icon{font-size:18px;flex-shrink:0}
+.banner-text{flex:1;line-height:1.5}
+.banner-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;padding:0 2px;line-height:1;-webkit-tap-highlight-color:transparent}
 
-/* ─── App shell ─── */
-#app {
-  display: flex;
-  flex-direction: column;
-  height: 100dvh;
-}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border-radius:12px;border:none;cursor:pointer;font-family:'Syne',sans-serif;font-size:14px;font-weight:700;transition:all .15s;text-decoration:none;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.btn:active{transform:scale(0.97)}
+.btn-accent{background:var(--accent);color:#0a0a0f}
+.btn-accent:active{background:#d0e83a}
+.btn-ghost{background:var(--surf2);border:1px solid var(--border);color:var(--text)}
+.btn-ghost:active{background:var(--surf3)}
+.btn-sm{padding:7px 14px;font-size:12px;border-radius:10px}
+.btn:disabled{opacity:.35;cursor:not-allowed;transform:none!important}
+.btn-full{width:100%}
 
-/* ─── Fixed header ─── */
-#header {
-  flex: 0 0 calc(var(--hdr) + env(safe-area-inset-top));
-  height: calc(var(--hdr) + env(safe-area-inset-top));
-  background: rgba(10,10,15,0.9);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  padding: env(safe-area-inset-top, 0px) 16px 12px;
-  gap: 8px;
-  z-index: 100;
-}
+/* Setup */
+#setup{display:none;padding:20px 14px}
+.setup-card{background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:28px 22px}
+.setup-card h2{font-size:20px;font-weight:800;margin-bottom:8px}
+.setup-card .sub{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px}
+ol.steps{list-style:none;counter-reset:s;margin-bottom:24px}
+ol.steps li{counter-increment:s;padding:11px 0 11px 42px;position:relative;font-size:13px;color:var(--muted);font-family:'DM Mono',monospace;border-bottom:1px solid var(--border);line-height:1.7}
+ol.steps li:last-child{border-bottom:none}
+ol.steps li::before{content:counter(s);position:absolute;left:0;top:11px;width:26px;height:26px;background:var(--surf2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--accent)}
+ol.steps a{color:var(--accent);text-decoration:none}
+ol.steps code{background:var(--surf2);padding:2px 6px;border-radius:5px;font-size:11px}
+.code-display{background:var(--bg);border:1px solid var(--border);border-radius:14px;padding:24px;text-align:center;margin:20px 0}
+.device-code{font-family:'DM Mono',monospace;font-size:36px;font-weight:700;letter-spacing:8px;color:var(--accent)}
+.code-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:10px}
 
-.hdr-logo { display: flex; align-items: center; gap: 9px; }
-.hdr-logo img { width: 30px; height: 30px; border-radius: 7px; }
-.hdr-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
-.hdr-title em { color: var(--accent); font-style: normal; }
+/* Section header */
+.section-header{display:flex;align-items:baseline;justify-content:space-between;padding:20px 14px 12px}
+.section-title{font-size:28px;font-weight:800;letter-spacing:-0.5px}
+.section-title span{color:var(--accent)}
+.section-sub{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px}
 
-.hdr-spacer { flex: 1; }
+/* Settings sheet */
+#settings-sheet{display:none;position:fixed;inset:0;z-index:200}
+.sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,0.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.sheet-panel{position:absolute;bottom:0;left:0;right:0;background:var(--surf);border-radius:24px 24px 0 0;border-top:1px solid var(--border);max-height:80vh;overflow-y:auto;padding-bottom:var(--safe-b);transform:translateY(100%);transition:transform .3s cubic-bezier(0.32,0.72,0,1)}
+#settings-sheet.open .sheet-panel{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:14px auto 0}
+.sheet-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px 12px;border-bottom:1px solid var(--border)}
+.sheet-title{font-size:17px;font-weight:700}
+.sheet-body{padding:0 20px 20px}
+.settings-section{padding:16px 0;border-bottom:1px solid var(--border)}
+.settings-section:last-child{border-bottom:none}
+.settings-label{font-family:'DM Mono',monospace;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px}
 
-.hdr-status {
-  font-family: 'DM Mono', monospace;
-  font-size: 10px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.status-dot {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 5px var(--green);
-  flex-shrink: 0;
-}
+/* Reminder chips */
+.reminder-chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.reminder-chip{display:flex;align-items:center;gap:4px;background:var(--surf2);border:1px solid var(--border);border-radius:20px;padding:6px 10px 6px 13px;font-family:'DM Mono',monospace;font-size:12px}
+.chip-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 0 0 4px}
+.chip-del:hover{color:var(--red)}
+.add-chip{background:none;border:1px dashed var(--border);border-radius:20px;padding:6px 13px;font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);cursor:pointer}
+.add-chip:hover{color:var(--accent);border-color:var(--accent)}
 
-/* ─── Scrollable content ─── */
-#content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
-}
+/* Type rows */
+.type-rows{display:flex;flex-direction:column}
+.type-row{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);cursor:pointer;-webkit-tap-highlight-color:transparent}
+.type-row:last-child{border-bottom:none}
+.type-row-name{font-size:15px;font-weight:600}
+.type-row-desc{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px}
+.ios-toggle{position:relative;width:51px;height:31px;flex-shrink:0}
+.ios-toggle input{opacity:0;width:0;height:0;position:absolute}
+.ios-track{position:absolute;inset:0;background:var(--surf3);border-radius:999px;border:1px solid var(--border);transition:background .2s}
+.ios-toggle input:checked+.ios-track{background:#30d158;border-color:#30d158}
+.ios-thumb{position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.4);transition:left .2s;pointer-events:none}
+.ios-toggle input:checked~.ios-thumb{left:22px}
 
-/* ─── Bottom tab bar ─── */
-#tabbar {
-  flex-shrink: 0;
-  background: rgba(10,10,15,0.95);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: flex-start;
-  padding-top: 8px;
-  padding-bottom: 0;
-}
+.disconnect-row{padding:16px 0 4px;text-align:center}
+.disconnect-btn{background:none;border:none;color:#ff6b6b;font-family:'DM Mono',monospace;font-size:13px;cursor:pointer;padding:8px 16px}
 
-.tab-btn {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;  /* was: center */
-  padding-top: 4px;
-  gap: 3px;
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  font-family: 'Syne', sans-serif;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  -webkit-tap-highlight-color: transparent;
-  transition: color .12s;
-}
-.tab-btn svg { width: 23px; height: 23px; transition: transform .12s; }
-.tab-btn.active { color: var(--accent); }
-.tab-btn.active svg { transform: scale(1.08); }
-.tab-btn:active { opacity: 0.6; }
+/* Album grid */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:0 14px}
+@media(min-width:480px){.grid{grid-template-columns:repeat(3,1fr)}}
+@media(min-width:700px){.grid{grid-template-columns:repeat(4,1fr)}}
+.card{background:var(--surf);border:1px solid var(--border);border-radius:14px;overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;transition:opacity .3s,transform .3s}
+.card.silencing{opacity:0;transform:scale(0.92)}
+.thumb-wrap{position:relative}
+.thumb{width:100%;aspect-ratio:1;object-fit:cover;display:block;background:var(--surf2)}
+.thumb-ph{width:100%;aspect-ratio:1;background:var(--surf2);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--muted)}
+.badge{position:absolute;top:6px;left:6px;padding:3px 7px;border-radius:20px;font-size:9px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.badge-due{background:var(--accent);color:#0a0a0f}
+.badge-snooze{background:rgba(20,20,30,0.85);color:var(--muted);border:1px solid var(--border)}
+.card-info{padding:10px 11px 4px}
+.card-title{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;line-height:1.3}
+.card-meta{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.release-type{font-size:9px;font-family:'DM Mono',monospace;font-weight:600;letter-spacing:.5px;text-transform:uppercase;color:var(--accent);margin-right:3px}
+.card-age{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted);margin-top:3px;opacity:.5}
+.card-actions{padding:6px 8px 10px;display:flex;gap:5px}
+.btn-ytm{flex:1;background:var(--surf2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Syne',sans-serif;font-size:11px;font-weight:600;padding:7px 6px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.btn-ytm:active{background:#180808;border-color:#ff3333;color:#ff5555}
+.btn-ytm svg{width:10px;height:10px;flex-shrink:0}
+.btn-act{width:34px;height:34px;background:var(--surf2);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;cursor:pointer;color:var(--muted);flex-shrink:0;-webkit-tap-highlight-color:transparent;transition:background .1s}
+.btn-act:active{background:var(--surf3)}
+.snooze-wrap{position:relative}
+.snooze-pop{position:absolute;bottom:calc(100% + 6px);right:0;background:var(--surf2);border:1px solid var(--border);border-radius:14px;padding:6px;display:none;flex-direction:column;gap:2px;z-index:100;min-width:130px;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.snooze-pop.open{display:flex}
+.snooze-opt{background:transparent;border:none;color:var(--text);font-family:'DM Mono',monospace;font-size:12px;padding:9px 12px;text-align:left;cursor:pointer;border-radius:9px;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.snooze-opt:active{background:var(--border)}
+.empty{grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:52px;margin-bottom:12px;opacity:.3}
+.empty h3{font-size:18px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty p{font-family:'DM Mono',monospace;font-size:12px;line-height:1.8}
 
-/* ─── Pages ─── */
-.page { display: none; }
-.page.active { display: block; }
+/* Toast */
+.toast{position:fixed;bottom:calc(20px + var(--safe-b));left:50%;transform:translateX(-50%) translateY(70px);z-index:9998;background:var(--surf2);border:1px solid var(--border);border-radius:12px;padding:11px 18px;font-size:13px;font-family:'DM Mono',monospace;white-space:nowrap;opacity:0;transition:all .22s;pointer-events:none;max-width:calc(100vw - 40px)}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast.ok{border-left:3px solid var(--green)}
+.toast.err{border-left:3px solid var(--red)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .65s linear infinite;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-/* ─── Library page ─── */
-.lib-content { padding: 14px 14px 24px; }
-
-.lib-topbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
-.lib-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
-.lib-count strong { font-size: 20px; font-family: 'Syne', sans-serif; font-weight: 800; color: var(--accent); margin-right: 3px; }
-
-/* ─── Notices ─── */
-.notice {
-  display: none;
-  align-items: center;
-  gap: 10px;
-  background: var(--surf);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 11px 13px;
-  margin-bottom: 11px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  color: var(--muted);
-  line-height: 1.5;
-}
-.notice.push-notice  { border-left: 3px solid var(--green); }
-.notice.add-notice   { border-left: 3px solid var(--accent); }
-.notice-icon  { font-size: 18px; flex-shrink: 0; }
-.notice-body  { flex: 1; }
-.notice-btn {
-  background: var(--accent);
-  color: #0a0a0f;
-  border: none;
-  border-radius: 7px;
-  padding: 6px 11px;
-  font-family: 'DM Mono', monospace;
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* ─── Album grid ─── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-}
-@media (min-width: 420px) { .grid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 600px) { .grid { grid-template-columns: repeat(4, 1fr); } }
-@media (min-width: 800px) { .grid { grid-template-columns: repeat(5, 1fr); } }
-
-/* ─── Album card ─── */
-.card {
-  background: var(--surf);
-  border: 1px solid var(--border);
-  border-radius: 11px;
-  overflow: hidden;
-  position: relative;
-  transition: opacity .25s, transform .2s;
-  -webkit-tap-highlight-color: transparent;
-}
-.card:active { transform: scale(0.97); opacity: 0.85; }
-.card.removing { opacity: 0; transform: scale(0.92); }
-
-.thumb { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; background: var(--surf2); }
-.thumb-ph { width: 100%; aspect-ratio: 1; background: var(--surf2); display: flex; align-items: center; justify-content: center; font-size: 30px; color: var(--muted); }
-
-.badge {
-  position: absolute; top: 7px; right: 7px;
-  padding: 2px 7px;
-  border-radius: 20px;
-  font-size: 8px;
-  font-family: 'DM Mono', monospace;
-  font-weight: 700;
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-}
-.badge-due    { background: var(--accent); color: #0a0a0f; }
-.badge-snooze { background: rgba(15,15,22,0.85); color: var(--muted); border: 1px solid var(--border); backdrop-filter: blur(4px); }
-
-.card-body { padding: 8px 9px 3px; }
-.card-title  { font-size: 12px; font-weight: 700; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-.card-artist { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.card-meta {
-  font-family: 'DM Mono', monospace; font-size: 9px; color: var(--muted);
-  margin-top: 4px; display: flex; align-items: center; gap: 4px; opacity: .6;
-}
-.type-pill {
-  background: var(--surf2); border: 1px solid var(--border);
-  border-radius: 3px; padding: 1px 4px;
-  font-size: 8px; letter-spacing: 0.4px; text-transform: uppercase;
-  opacity: 1;
-}
-
-.card-actions { padding: 5px 9px 9px; display: flex; gap: 5px; }
-
-.btn-play {
-  flex: 1;
-  display: flex; align-items: center; justify-content: center; gap: 5px;
-  background: var(--surf2); border: 1px solid var(--border);
-  color: var(--text);
-  font-family: 'DM Mono', monospace; font-size: 10px;
-  padding: 7px 8px; border-radius: 8px;
-  cursor: pointer; text-decoration: none; white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-  transition: all .12s;
-}
-.btn-play:active { background: #160707; border-color: #ff3333; color: #ff5555; }
-.yt-icon { width: 14px; height: 10px; flex-shrink: 0; }
-
-.btn-ic {
-  background: var(--surf2); border: 1px solid var(--border);
-  color: var(--muted);
-  border-radius: 8px; padding: 7px 9px;
-  cursor: pointer; font-size: 13px; line-height: 1;
-  display: flex; align-items: center; justify-content: center;
-  -webkit-tap-highlight-color: transparent;
-  transition: all .12s;
-}
-.btn-ic:active { background: var(--border); color: var(--text); }
-
-/* ─── Snooze popover ─── */
-.snooze-wrap { position: relative; }
-.snooze-pop {
-  display: none;
-  position: absolute; bottom: calc(100% + 5px); right: 0;
-  background: var(--surf2); border: 1px solid var(--border);
-  border-radius: 11px; padding: 5px;
-  flex-direction: column; gap: 2px;
-  z-index: 300; min-width: 130px;
-  box-shadow: 0 8px 32px rgba(0,0,0,.65);
-}
-.snooze-pop.open { display: flex; }
-.snooze-opt {
-  background: transparent; border: none; color: var(--text);
-  font-family: 'DM Mono', monospace; font-size: 12px;
-  padding: 9px 12px; border-radius: 7px;
-  text-align: left; cursor: pointer; white-space: nowrap;
-  -webkit-tap-highlight-color: transparent;
-}
-.snooze-opt:active { background: var(--border); }
-
-/* ─── Empty state ─── */
-.empty {
-  text-align: center; padding: 60px 20px; color: var(--muted);
-  grid-column: 1 / -1;
-}
-.empty-ico { font-size: 44px; margin-bottom: 12px; opacity: .2; }
-.empty h3 { font-size: 16px; color: var(--text); font-weight: 700; margin-bottom: 6px; }
-.empty p { font-family: 'DM Mono', monospace; font-size: 11px; line-height: 1.8; }
-
-/* ─── Setup page ─── */
-.setup-wrap {
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  min-height: 70vh; padding: 32px 20px;
-  text-align: center;
-}
-.setup-icon { width: 76px; height: 76px; border-radius: 18px; margin-bottom: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.5); }
-.setup-title { font-size: 22px; font-weight: 800; margin-bottom: 8px; }
-.setup-sub { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.9; margin-bottom: 28px; }
-.setup-card {
-  width: 100%; max-width: 360px; text-align: left;
-  background: var(--surf); border: 1px solid var(--border);
-  border-radius: 16px; padding: 22px 20px;
-}
-.setup-card h3 { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
-.setup-steps { list-style: none; counter-reset: s; margin-bottom: 20px; }
-.setup-steps li {
-  counter-increment: s;
-  padding: 9px 0 9px 34px; position: relative;
-  font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted);
-  border-bottom: 1px solid var(--border); line-height: 1.7;
-}
-.setup-steps li:last-child { border-bottom: none; }
-.setup-steps li::before {
-  content: counter(s);
-  position: absolute; left: 0; top: 9px;
-  width: 21px; height: 21px;
-  background: var(--surf2); border: 1px solid var(--border); border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 9px; font-weight: 700; color: var(--accent);
-}
-.setup-steps a { color: var(--accent); text-decoration: none; }
-.btn-main {
-  width: 100%; background: var(--accent); color: #0a0a0f;
-  border: none; border-radius: 11px; padding: 14px;
-  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-  transition: opacity .12s;
-}
-.btn-main:disabled { opacity: .45; }
-.btn-main:active { opacity: .8; }
-
-.code-block { text-align: center; margin: 18px 0; }
-.code-val {
-  display: block; font-family: 'DM Mono', monospace;
-  font-size: 34px; font-weight: 700; letter-spacing: 7px;
-  color: var(--accent); margin-bottom: 6px;
-}
-.code-hint { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); }
-
-/* ─── Settings page ─── */
-.settings-content { padding: 14px 14px 32px; }
-.settings-label {
-  font-family: 'DM Mono', monospace; font-size: 10px; font-weight: 600;
-  letter-spacing: 1.5px; text-transform: uppercase;
-  color: var(--muted); padding: 10px 4px 6px;
-}
-.settings-group {
-  background: var(--surf); border: 1px solid var(--border);
-  border-radius: 13px; overflow: hidden; margin-bottom: 20px;
-}
-.srow {
-  display: flex; align-items: center;
-  padding: 13px 16px; gap: 12px;
-  border-bottom: 1px solid var(--border);
-}
-.srow:last-child { border-bottom: none; }
-.srow-label { flex: 1; }
-.srow-name { font-size: 14px; font-weight: 600; }
-.srow-desc { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
-.srow input[type=number] {
-  width: 58px; background: var(--surf2);
-  border: 1px solid var(--border); border-radius: 8px;
-  color: var(--text); font-family: 'DM Mono', monospace;
-  font-size: 15px; font-weight: 500; padding: 7px 8px;
-  outline: none; text-align: center;
-}
-.srow input[type=number]:focus { border-color: var(--accent); }
-.srow input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); cursor: pointer; }
-.btn-del { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
-.btn-del:active { color: var(--red); }
-.btn-add {
-  display: flex; align-items: center; gap: 6px;
-  background: none; border: none; color: var(--accent);
-  font-family: 'DM Mono', monospace; font-size: 12px;
-  padding: 10px 16px; cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn-save {
-  width: 100%; background: var(--accent); color: #0a0a0f;
-  border: none; border-radius: 11px; padding: 14px;
-  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-  cursor: pointer; margin-bottom: 12px;
-  -webkit-tap-highlight-color: transparent;
-}
-.btn-save:active { opacity: .8; }
-.btn-danger {
-  width: 100%; background: transparent; color: var(--red);
-  border: 1px solid rgba(255,107,107,.25); border-radius: 11px; padding: 14px;
-  font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
-  cursor: pointer; -webkit-tap-highlight-color: transparent;
-}
-.btn-danger:active { background: rgba(255,107,107,.08); }
-
-.account-card {
-  display: flex; align-items: center; gap: 12px;
-  background: var(--surf); border: 1px solid var(--border);
-  border-radius: 13px; padding: 15px 16px; margin-bottom: 20px;
-}
-.acct-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); box-shadow: 0 0 6px var(--green); flex-shrink: 0; }
-.acct-info { flex: 1; }
-.acct-name { font-size: 14px; font-weight: 700; }
-.acct-sub  { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); margin-top: 2px; }
-
-/* ─── Spinner ─── */
-@keyframes spin { to { transform: rotate(360deg); } }
-.spin {
-  display: inline-block; width: 13px; height: 13px;
-  border: 2px solid currentColor; border-top-color: transparent;
-  border-radius: 50%; animation: spin .6s linear infinite;
-  vertical-align: middle; margin-right: 5px;
-}
-
-/* ─── Toast ─── */
-.toast {
-  position: fixed;
-  bottom: calc(var(--tab) + env(safe-area-inset-bottom, 16px) + 10px);
-  left: 50%; transform: translateX(-50%) translateY(16px);
-  background: var(--surf2); border: 1px solid var(--border);
-  border-radius: 18px; padding: 9px 16px;
-  font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text);
-  opacity: 0; transition: opacity .2s, transform .2s;
-  pointer-events: none; z-index: 9999;
-  white-space: nowrap; box-shadow: 0 4px 20px rgba(0,0,0,.5);
-}
-.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-.toast.ok  { border-color: var(--green); }
-.toast.err { border-color: var(--red); }
+/* Day modal */
+#day-modal{display:none;position:fixed;inset:0;z-index:300;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+#day-modal.open{display:flex}
+.day-modal-box{background:var(--surf);border:1px solid var(--border);border-radius:20px;padding:24px 22px;width:calc(100% - 48px);max-width:300px;text-align:center}
+.day-modal-box h3{font-size:16px;font-weight:700;margin-bottom:16px}
+.day-modal-box input[type=number]{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'DM Mono',monospace;font-size:24px;font-weight:700;padding:12px;outline:none;text-align:center;margin-bottom:16px;transition:border-color .2s}
+.day-modal-box input[type=number]:focus{border-color:var(--accent)}
+.day-modal-btns{display:flex;gap:10px}
+.day-modal-btns .btn{flex:1}
 </style>
 </head>
 <body>
 
-<div id="app">
-
-  <!-- Fixed Header -->
-  <header id="header">
-    <div class="hdr-logo">
-      <img src="/logo.svg" alt="">
-      <span class="hdr-title">un<em>played</em></span>
+<header id="app-header">
+  <div class="header-inner">
+    <div class="logo-row">
+      <img src="/logo.svg" alt="Unplayed" class="logo-img">
+      <div class="logo-text">un<em>played</em></div>
     </div>
-    <div class="hdr-spacer"></div>
-    <div class="hdr-status" id="hdr-status" style="display:none">
-      <span class="status-dot"></span>
-      <span id="hdr-sync-time"></span>
+    <div class="hdr-right">
+      <div class="dot-row" id="auth-dot">…</div>
+      <button class="icon-btn" id="settings-btn" onclick="openSettings()" title="Settings" style="display:none">⚙</button>
     </div>
-  </header>
+  </div>
+</header>
 
-  <!-- Content area -->
-  <div id="content">
+<div id="scroll-wrap">
 
-    <!-- Setup -->
-    <div class="page active" id="page-setup">
-      <div class="setup-wrap">
-        <img src="/logo.svg" class="setup-icon" alt="Unplayed">
-        <h1 class="setup-title">Connect YouTube Music</h1>
-        <p class="setup-sub">Sign in once with Google OAuth.<br>No passwords. No cookie pasting. Ever.</p>
-
-        <div class="setup-card" id="auth-step1">
-          <h3>Get started</h3>
-          <ol class="setup-steps">
-            <li>Tap the button below to generate your login code</li>
-            <li>Visit <a href="https://google.com/device" target="_blank">google.com/device</a> on any device</li>
-            <li>Enter the code and sign in with your Google account</li>
-          </ol>
-          <button class="btn-main" id="btn-start-auth" onclick="startAuth()">Get login code</button>
-        </div>
-
-        <div class="setup-card" id="auth-step2" style="display:none">
-          <h3>Enter this code at <a href="https://google.com/device" target="_blank" style="color:var(--accent)">google.com/device</a></h3>
-          <div class="code-block">
-            <span class="code-val" id="user-code">——</span>
-            <span class="code-hint">Waiting for sign-in<span id="poll-dots"></span></span>
-          </div>
-          <p style="font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);line-height:1.8">
-            Sign in with the Google account that has your YouTube Music library. Expires in <span id="expiry-min">10</span> min.
-          </p>
+  <div id="setup">
+    <div class="setup-card">
+      <h2>Connect YouTube Music</h2>
+      <p class="sub">One-time setup. Unplayed uses Google's official device login — no passwords, no copy-pasting cookies. The connection auto-renews forever.</p>
+      <div id="auth-step-start">
+        <ol class="steps">
+          <li>Make sure you have a Google Cloud project with the YouTube Data API enabled and a <strong>TV &amp; Limited Input</strong> OAuth client ID set in your env vars</li>
+          <li>Tap the button below to get your login code</li>
+        </ol>
+        <button class="btn btn-accent btn-full" onclick="startAuth()" id="start-auth-btn">Get login code</button>
+      </div>
+      <div id="auth-step-code" style="display:none">
+        <p style="font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:4px">Open <a id="verify-url" href="https://google.com/device" target="_blank" style="color:var(--accent)">google.com/device</a> on any device and enter:</p>
+        <div class="code-display">
+          <div class="device-code" id="user-code">——</div>
+          <div class="code-sub">Waiting for approval<span id="poll-dots">…</span></div>
+          <div class="code-sub" style="margin-top:6px">Expires in <span id="code-expiry">10</span> min</div>
         </div>
       </div>
     </div>
-
-    <!-- Library -->
-    <div class="page" id="page-library">
-      <div class="lib-content">
-        <div id="notice-add" class="notice add-notice">
-          <span class="notice-icon">📲</span>
-          <span class="notice-body" id="notice-add-text">Add to Home Screen for push notifications</span>
-          <button class="notice-btn" id="notice-add-btn" onclick="installApp()" style="display:none">Add</button>
-        </div>
-        <div id="notice-push" class="notice push-notice">
-          <span class="notice-icon">🔔</span>
-          <span class="notice-body">Enable notifications to get reminded about unplayed albums</span>
-          <button class="notice-btn" onclick="enablePush()">Enable</button>
-        </div>
-
-        <div class="lib-topbar">
-          <div class="lib-count"><strong id="album-count">0</strong> albums</div>
-        </div>
-        <div class="grid" id="album-grid"></div>
-      </div>
-    </div>
-
-    <!-- Settings -->
-    <div class="page" id="page-settings">
-      <div class="settings-content">
-        <div class="account-card">
-          <span class="acct-dot"></span>
-          <div class="acct-info">
-            <div class="acct-name">YouTube Music</div>
-            <div class="acct-sub">Connected · syncs every 6 hours</div>
-          </div>
-        </div>
-
-        <div class="settings-label">Reminder schedule</div>
-        <div class="settings-group" id="settings-group-reminders">
-          <div id="reminder-rows"></div>
-          <button class="btn-add" onclick="addReminderRow()">＋ Add reminder</button>
-        </div>
-
-        <div class="settings-label">Track types</div>
-        <div class="settings-group" id="type-checkboxes"></div>
-
-        <button class="btn-save" onclick="saveSettings()">Save settings</button>
-        <button class="btn-danger" onclick="disconnect()">Disconnect account</button>
-      </div>
-    </div>
-
   </div>
 
-  <!-- Bottom tab bar (hidden until authenticated) -->
-  <nav id="tabbar" style="display:none">
-    <button class="tab-btn active" id="tab-library" onclick="switchTab('library')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M9 18V5l12-2v13"/>
-        <circle cx="6" cy="18" r="3"/>
-        <circle cx="18" cy="16" r="3"/>
-      </svg>
-      Library
-    </button>
-    <button class="tab-btn" id="tab-settings" onclick="switchTab('settings')">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-      Settings
-    </button>
-  </nav>
+  <div class="banner banner-install" id="bar-install" style="display:none">
+    <span class="banner-icon">📲</span>
+    <span class="banner-text" id="install-msg">Add Unplayed to your Home Screen to receive push notifications</span>
+    <button class="btn btn-accent btn-sm" id="install-btn" onclick="installPWA()">Add</button>
+    <button class="banner-close" onclick="this.closest('.banner').style.display='none'">✕</button>
+  </div>
+
+  <div class="banner banner-push" id="bar-push" style="display:none">
+    <span class="banner-icon">🔔</span>
+    <span class="banner-text">Enable notifications to get reminders on this device</span>
+    <button class="btn btn-ghost btn-sm" onclick="enablePush()">Enable</button>
+    <button class="banner-close" onclick="this.closest('.banner').style.display='none'">✕</button>
+  </div>
+
+  <div id="main" style="display:none">
+    <div class="section-header">
+      <div>
+        <div class="section-title"><span id="count">0</span> albums</div>
+        <div class="section-sub">waiting to be listened to</div>
+      </div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+</div>
+
+<div id="settings-sheet">
+  <div class="sheet-backdrop" onclick="closeSettings()"></div>
+  <div class="sheet-panel">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Settings</span>
+      <button class="btn btn-accent btn-sm" onclick="saveSettings()">Save</button>
+    </div>
+    <div class="sheet-body">
+      <div class="settings-section">
+        <div class="settings-label">Reminder schedule</div>
+        <p style="font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:12px">Get notified after this many days of saving an album:</p>
+        <div class="reminder-chip-row" id="reminder-chips"></div>
+        <button class="add-chip" onclick="addReminderDay()">+ add day</button>
+      </div>
+      <div class="settings-section">
+        <div class="settings-label">Remind me about</div>
+        <div class="type-rows" id="type-rows"></div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-label">Notification time</div>
+        <div class="type-rows" id="notify-time-rows"></div>
+      </div>
+      <div class="disconnect-row">
+        <button class="disconnect-btn" onclick="disconnect()">Disconnect YouTube Music</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="day-modal">
+  <div class="day-modal-box">
+    <h3>Days after saving</h3>
+    <input type="number" id="day-input" min="1" max="365" value="14" inputmode="numeric">
+    <div class="day-modal-btns">
+      <button class="btn btn-ghost" onclick="closeDayModal()">Cancel</button>
+      <button class="btn btn-accent" onclick="confirmDayModal()">Add</button>
+    </div>
+  </div>
 </div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-let albums = [], settings = {}, vapidKey = '';
-let deferredInstall = null;
+let albums=[],settings={reminderDays:[3,7,30],allowedTypes:['Album'],notifyHour:18},vapidKey='',deferredInstall=null;
+const ytLogo=`<svg viewBox="0 0 24 24" fill="currentColor"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.6 12 3.6 12 3.6s-7.5 0-9.4.5A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.5 9.4.5 9.4.5s7.5 0 9.4-.5a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>`;
 
-// ── Init ──────────────────────────────────────────────────────────────────────
-async function init() {
-  const status = await fetch('/api/status').then(r => r.json());
-  vapidKey = status.pushKey || '';
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;document.getElementById('bar-install').style.display='flex'});
+window.addEventListener('appinstalled',()=>{document.getElementById('bar-install').style.display='none';toast('✓ Added to home screen','ok')});
+async function installPWA(){if(!deferredInstall)return;deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;document.getElementById('bar-install').style.display='none'}
 
-  if (!status.authReady) { return; } // stay on setup page
-
-  // Show authenticated shell
-  document.getElementById('tabbar').style.display = 'flex';
-  document.getElementById('hdr-status').style.display = 'flex';
-  switchTab('library');
-
-  if (status.lastSync) {
-    const d = new Date(status.lastSync);
-    document.getElementById('hdr-sync-time').textContent =
-      d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
+async function init(){
+  const status=await fetch('/api/status').then(r=>r.json());
+  vapidKey=status.pushKey??'';
+  document.getElementById('auth-dot').innerHTML=status.authReady
+    ?'<span class="dot dot-g"></span> Connected'
+    :'<span class="dot dot-r"></span> Not connected';
+  if(!status.authReady){document.getElementById('setup').style.display='block';return}
+  document.getElementById('settings-btn').style.display='';
+  document.getElementById('main').style.display='block';
   await loadAlbums();
   checkPrompts();
 }
 
-async function loadAlbums() {
-  const d = await fetch('/api/albums').then(r => r.json());
-  albums = d.albums;
-  settings = d.settings;
-  renderAlbums();
+let pollTimer=null,pollInterval=5000;
+async function startAuth(){
+  const btn=document.getElementById('start-auth-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spin"></span> Starting…';
+  try{
+    const r=await fetch('/api/auth/start',{method:'POST'});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    document.getElementById('user-code').textContent=d.userCode;
+    document.getElementById('verify-url').href=d.verificationUrl;
+    document.getElementById('verify-url').textContent=d.verificationUrl;
+    document.getElementById('code-expiry').textContent=Math.round(d.expiresIn/60);
+    document.getElementById('auth-step-start').style.display='none';
+    document.getElementById('auth-step-code').style.display='block';
+    pollInterval=(d.interval||5)*1000;startPolling();
+  }catch(e){btn.disabled=false;btn.innerHTML='Get login code';toast(e.message,'err')}
+}
+function startPolling(){
+  let dots=0;const dotEl=document.getElementById('poll-dots');
+  pollTimer=setInterval(async()=>{
+    dots=(dots+1)%4;if(dotEl)dotEl.textContent='.'.repeat(dots+1);
+    try{
+      const r=await fetch('/api/auth/poll',{method:'POST'});const d=await r.json();
+      if(d.status==='approved'){clearInterval(pollTimer);toast('✓ Connected to YouTube Music!','ok');setTimeout(()=>location.reload(),900)}
+      else if(d.status==='expired'){clearInterval(pollTimer);toast('Code expired — try again','err');document.getElementById('auth-step-start').style.display='block';document.getElementById('auth-step-code').style.display='none';const btn=document.getElementById('start-auth-btn');btn.disabled=false;btn.innerHTML='Get login code'}
+    }catch(e){}
+  },pollInterval);
 }
 
-// ── Tab navigation ────────────────────────────────────────────────────────────
-function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.id === 'tab-' + tab));
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + tab).classList.add('active');
-  document.getElementById('content').scrollTop = 0;
-  if (tab === 'settings') renderSettings();
+async function loadAlbums(){const d=await fetch('/api/albums').then(r=>r.json());albums=d.albums??[];settings=d.settings??settings;render()}
+function render(){
+  document.getElementById('count').textContent=albums.length;
+  const grid=document.getElementById('grid');
+  if(!albums.length){grid.innerHTML=`<div class="empty"><div class="empty-icon">💿</div><h3>All caught up</h3><p>The cron job syncs your YT Music library every 6 hours.<br>New saves will appear here automatically.</p></div>`;return}
+  grid.innerHTML=albums.map(albumCard).join('');
 }
-
-// ── Render albums ─────────────────────────────────────────────────────────────
-function renderAlbums() {
-  const grid = document.getElementById('album-grid');
-  document.getElementById('album-count').textContent = albums.length;
-
-  if (!albums.length) {
-    grid.innerHTML = `<div class="empty">
-      <div class="empty-ico">🎵</div>
-      <h3>No albums yet</h3>
-      <p>Save albums in YouTube Music.<br>They'll show up here after the next sync.</p>
-    </div>`;
-    return;
-  }
-
-  grid.innerHTML = albums.map(a => {
-    const isDue = (settings.reminderDays || []).some(d => a.ageDays >= d && !(a.remindersSent || []).includes(d));
-    const isSnoozed = a.snoozedDaysLeft > 0;
-    const showType = a.releaseType && a.releaseType !== 'Album' && a.releaseType !== 'Unknown';
-    return `<div class="card" id="card-${esc(a.id)}">
-      ${a.thumbnail
-        ? `<img class="thumb" src="${esc(a.thumbnail)}" alt="${esc(a.title)}" loading="lazy">`
-        : `<div class="thumb-ph">🎵</div>`}
-      ${isDue ? `<div class="badge badge-due">Due</div>` : ''}
-      ${isSnoozed && !isDue ? `<div class="badge badge-snooze">+${a.snoozedDaysLeft}d</div>` : ''}
-      <div class="card-body">
-        <div class="card-title">${esc(a.title)}</div>
-        <div class="card-artist">${esc(a.artist)}</div>
-        <div class="card-meta">
-          ${showType ? `<span class="type-pill">${esc(a.releaseType)}</span>` : ''}
-          ${a.ageDays}d
+function albumCard(a){
+  const age=a.ageDays===0?'today':a.ageDays===1?'yesterday':`${a.ageDays}d ago`;
+  let badge='';
+  if(a.snoozedDaysLeft>0)badge=`<div class="badge badge-snooze">snoozed ${a.snoozedDaysLeft}d</div>`;
+  else if(isDue(a))badge=`<div class="badge badge-due">due</div>`;
+  const typeTag=(a.releaseType&&a.releaseType!=='Album'&&a.releaseType!=='Unknown')?`<span class="release-type">${a.releaseType}</span>`:'';
+  const img=a.thumbnail?`<img class="thumb" src="${a.thumbnail}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`:'' ;
+  const ph=`<div class="thumb-ph" ${a.thumbnail?'style="display:none"':''}>💿</div>`;
+  return `<div class="card" id="c-${a.id}">
+    <div class="thumb-wrap">${badge}${img}${ph}</div>
+    <div class="card-info">
+      <div class="card-title" title="${esc(a.title)}">${esc(a.title)}</div>
+      <div class="card-meta">${typeTag}${esc(a.artist)}${a.year?' · '+a.year:''}</div>
+      <div class="card-age">saved ${age}</div>
+    </div>
+    <div class="card-actions">
+      <a href="https://music.youtube.com/browse/${a.id}" target="_blank" class="btn-ytm">${ytLogo} Play</a>
+      <div class="snooze-wrap">
+        <button class="btn-act" onclick="toggleSnooze('${a.id}',event)" title="Snooze">⏱</button>
+        <div class="snooze-pop" id="sp-${a.id}">
+          <button class="snooze-opt" onclick="snooze('${a.id}',3)">3 days</button>
+          <button class="snooze-opt" onclick="snooze('${a.id}',7)">1 week</button>
+          <button class="snooze-opt" onclick="snooze('${a.id}',14)">2 weeks</button>
         </div>
       </div>
-      <div class="card-actions">
-        <a class="btn-play" href="https://music.youtube.com/browse/${esc(a.id)}" target="_blank">
-          <svg class="yt-icon" viewBox="0 0 18 12"><path d="M17.6 1.9a2.3 2.3 0 0 0-1.6-1.6C14.5 0 9 0 9 0S3.5 0 2 .3A2.3 2.3 0 0 0 .4 1.9C0 3.4 0 6 0 6s0 2.6.4 4.1a2.3 2.3 0 0 0 1.6 1.6C3.5 12 9 12 9 12s5.5 0 7-0.3a2.3 2.3 0 0 0 1.6-1.6C18 8.6 18 6 18 6s0-2.6-.4-4.1z" fill="#ff0000"/><polygon points="7.2,8.6 11.9,6 7.2,3.4" fill="white"/></svg>
-          Play
-        </a>
-        <div class="snooze-wrap">
-          <button class="btn-ic" onclick="toggleSnooze('${esc(a.id)}')" title="Snooze">⏱</button>
-          <div class="snooze-pop" id="snooze-${esc(a.id)}">
-            <button class="snooze-opt" onclick="snooze('${esc(a.id)}',3)">3 days</button>
-            <button class="snooze-opt" onclick="snooze('${esc(a.id)}',7)">1 week</button>
-            <button class="snooze-opt" onclick="snooze('${esc(a.id)}',14)">2 weeks</button>
-          </div>
-        </div>
-        <button class="btn-ic" onclick="silence('${esc(a.id)}')" title="Dismiss">✕</button>
+      <button class="btn-act" onclick="silence('${a.id}')" title="Stop reminding" style="color:var(--red)">✕</button>
+    </div>
+  </div>`;
+}
+function isDue(a){if(a.snoozedDaysLeft>0)return false;return settings.reminderDays.some(d=>a.ageDays>=d&&!a.remindersSent.includes(d))}
+function toggleSnooze(id,e){e.stopPropagation();document.querySelectorAll('.snooze-pop').forEach(p=>{if(p.id!==`sp-${id}`)p.classList.remove('open')});document.getElementById(`sp-${id}`).classList.toggle('open')}
+document.addEventListener('click',()=>document.querySelectorAll('.snooze-pop').forEach(p=>p.classList.remove('open')));
+async function snooze(id,days){
+  document.getElementById(`sp-${id}`)?.classList.remove('open');
+  await fetch(`/api/albums/${id}/snooze`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({days})});
+  const label=days===7?'1 week':days===14?'2 weeks':`${days} days`;
+  toast(`⏱ Snoozed for ${label}`,'ok');await loadAlbums();
+}
+async function silence(id){
+  const card=document.getElementById(`c-${id}`);if(card)card.classList.add('silencing');
+  await new Promise(r=>setTimeout(r,280));
+  await fetch(`/api/albums/${id}/silence`,{method:'POST'});
+  albums=albums.filter(a=>a.id!==id);render();toast('✕ Reminder stopped','ok');
+}
+
+function openSettings(){renderSettingsPanel();const s=document.getElementById('settings-sheet');s.style.display='block';requestAnimationFrame(()=>s.classList.add('open'))}
+function closeSettings(){const s=document.getElementById('settings-sheet');s.classList.remove('open');setTimeout(()=>s.style.display='none',300)}
+function renderSettingsPanel(){
+  document.getElementById('reminder-chips').innerHTML=(settings.reminderDays||[]).map((d,i)=>`<div class="reminder-chip">${d}d <button class="chip-del" onclick="removeReminderDay(${i})">×</button></div>`).join('');
+  const typeDescs={Album:'Full-length albums',EP:'Extended plays',Single:'Single tracks'};
+  const allowed=settings.allowedTypes??['Album'];
+  document.getElementById('type-rows').innerHTML=['Album','EP','Single'].map(t=>`
+    <label class="type-row">
+      <div class="type-row-info">
+        <div class="type-row-name">${t}</div>
+        <div class="type-row-desc">${typeDescs[t]}</div>
       </div>
-    </div>`;
-  }).join('');
-}
-
-// ── Album actions ─────────────────────────────────────────────────────────────
-function toggleSnooze(id) {
-  document.querySelectorAll('.snooze-pop').forEach(p => {
-    if (p.id !== 'snooze-' + id) p.classList.remove('open');
-  });
-  document.getElementById('snooze-' + id)?.classList.toggle('open');
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('.snooze-wrap'))
-    document.querySelectorAll('.snooze-pop.open').forEach(p => p.classList.remove('open'));
-});
-
-async function snooze(id, days) {
-  document.getElementById('snooze-' + id)?.classList.remove('open');
-  const r = await fetch(`/api/albums/${id}/snooze`, {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({days})
-  });
-  if (!r.ok) { toast('Failed to snooze', 'err'); return; }
-  const a = albums.find(x => x.id === id);
-  if (a) a.snoozedDaysLeft = days;
-  renderAlbums();
-  toast(`⏱ Snoozed ${days} days`, 'ok');
-}
-
-async function silence(id) {
-  document.getElementById('card-' + id)?.classList.add('removing');
-  await fetch(`/api/albums/${id}/silence`, {method:'POST'});
-  setTimeout(() => {
-    albums = albums.filter(a => a.id !== id);
-    renderAlbums();
-    toast('✕ Reminder stopped', 'ok');
-  }, 250);
-}
-
-// ── Auth ──────────────────────────────────────────────────────────────────────
-let pollTimer = null;
-
-async function startAuth() {
-  const btn = document.getElementById('btn-start-auth');
-  btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span> Starting…';
-  try {
-    const r = await fetch('/api/auth/start', {method:'POST'});
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error);
-    document.getElementById('user-code').textContent = d.userCode;
-    document.getElementById('expiry-min').textContent = Math.round(d.expiresIn / 60);
-    document.getElementById('auth-step1').style.display = 'none';
-    document.getElementById('auth-step2').style.display = 'block';
-    pollAuth(d.interval || 5);
-  } catch(e) {
-    btn.disabled = false;
-    btn.innerHTML = 'Get login code';
-    toast(e.message, 'err');
-  }
-}
-
-function pollAuth(interval) {
-  let dots = 0;
-  const dotsEl = document.getElementById('poll-dots');
-  pollTimer = setInterval(async () => {
-    dots = (dots + 1) % 4;
-    if (dotsEl) dotsEl.textContent = '.'.repeat(dots + 1);
-    try {
-      const r = await fetch('/api/auth/poll', {method:'POST'});
-      const d = await r.json();
-      if (d.status === 'approved') {
-        clearInterval(pollTimer);
-        toast('✓ Connected!', 'ok');
-        setTimeout(() => location.reload(), 800);
-      } else if (d.status === 'expired') {
-        clearInterval(pollTimer);
-        toast('Code expired — try again', 'err');
-        document.getElementById('auth-step1').style.display = 'block';
-        document.getElementById('auth-step2').style.display = 'none';
-        const btn = document.getElementById('btn-start-auth');
-        btn.disabled = false; btn.innerHTML = 'Get login code';
-      }
-    } catch {}
-  }, interval * 1000);
-}
-
-// ── Settings ──────────────────────────────────────────────────────────────────
-function renderSettings() {
-  // Reminder rows
-  const rows = document.getElementById('reminder-rows');
-  rows.innerHTML = (settings.reminderDays || [3, 7, 30]).map((d, i) => `
-    <div class="srow">
-      <div class="srow-label">
-        <div class="srow-name">Reminder ${i+1}</div>
-        <div class="srow-desc">days after saving to library</div>
+      <label class="ios-toggle">
+        <input type="checkbox" id="type-${t}" ${allowed.includes(t)?'checked':''}>
+        <div class="ios-track"></div>
+        <div class="ios-thumb"></div>
+      </label>
+    </label>`).join('');
+  const notifyOptions=[
+    {label:'Morning',time:'8:00 AM',utcHour:7},
+    {label:'Afternoon',time:'2:00 PM',utcHour:13},
+    {label:'Evening',time:'7:00 PM',utcHour:18},
+  ];
+  const currentHour=settings.notifyHour??18;
+  document.getElementById('notify-time-rows').innerHTML=notifyOptions.map(o=>`
+    <label class="type-row" style="cursor:pointer">
+      <div class="type-row-info">
+        <div class="type-row-name">${o.label}</div>
+        <div class="type-row-desc">${o.time}</div>
       </div>
-      <input type="number" min="1" max="365" value="${d}" id="rd-${i}" oninput="syncReminderDays()">
-      <button class="btn-del" onclick="removeReminder(${i})">×</button>
-    </div>`).join('');
-
-  // Type checkboxes
-  const typeDescs = {Album:'Full-length albums', EP:'Extended plays', Single:'Single tracks'};
-  const allowed = settings.allowedTypes || ['Album'];
-  document.getElementById('type-checkboxes').innerHTML = ['Album','EP','Single'].map(t => `
-    <label class="srow" style="cursor:pointer;user-select:none">
-      <div class="srow-label">
-        <div class="srow-name">${t}</div>
-        <div class="srow-desc">${typeDescs[t]}</div>
-      </div>
-      <input type="checkbox" id="type-${t}" ${allowed.includes(t)?'checked':''}>
+      <input type="radio" name="notifyHour" value="${o.utcHour}" ${currentHour===o.utcHour?'checked':''}
+        style="width:20px;height:20px;accent-color:var(--accent);cursor:pointer;flex-shrink:0">
     </label>`).join('');
 }
-
-function syncReminderDays() {
-  settings.reminderDays = [...document.querySelectorAll('[id^="rd-"]')]
-    .map(i => parseInt(i.value)).filter(n => n > 0);
+function removeReminderDay(i){if(settings.reminderDays.length<=1){toast('Need at least one reminder','err');return}settings.reminderDays.splice(i,1);renderSettingsPanel()}
+function addReminderDay(){document.getElementById('day-input').value='14';document.getElementById('day-modal').classList.add('open')}
+function closeDayModal(){document.getElementById('day-modal').classList.remove('open')}
+function confirmDayModal(){
+  const val=parseInt(document.getElementById('day-input').value);
+  if(!val||val<1){toast('Enter a valid number of days','err');return}
+  settings.reminderDays.push(val);settings.reminderDays.sort((a,b)=>a-b);closeDayModal();renderSettingsPanel();
 }
-function addReminderRow() {
-  settings.reminderDays = [...(settings.reminderDays || []), 14];
-  renderSettings();
-}
-function removeReminder(i) {
-  if ((settings.reminderDays || []).length <= 1) { toast('Need at least one reminder', 'err'); return; }
-  settings.reminderDays.splice(i, 1);
-  renderSettings();
-}
-
-async function saveSettings() {
-  syncReminderDays();
-  const days = (settings.reminderDays || []).filter(d => d > 0);
-  if (!days.length) { toast('Add at least one reminder day', 'err'); return; }
-  const allowedTypes = ['Album','EP','Single'].filter(t => document.getElementById(`type-${t}`)?.checked);
-  if (!allowedTypes.length) { toast('Select at least one type', 'err'); return; }
-  try {
-    const r = await fetch('/api/settings', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({reminderDays: days, allowedTypes})
-    });
-    const d = await r.json();
-    if (!r.ok) throw new Error(d.error);
-    settings = d.settings;
-    toast('✓ Settings saved', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+async function saveSettings(){
+  const days=[...new Set(settings.reminderDays)].filter(d=>d>0).sort((a,b)=>a-b);
+  if(!days.length){toast('Add at least one reminder day','err');return}
+  const allowedTypes=['Album','EP','Single'].filter(t=>document.getElementById(`type-${t}`)?.checked);
+  if(!allowedTypes.length){toast('Select at least one release type','err');return}
+  const notifyHour=parseInt(document.querySelector('input[name="notifyHour"]:checked')?.value??'18');
+  try{
+    const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reminderDays:days,allowedTypes,notifyHour})});
+    const d=await r.json();if(!r.ok)throw new Error(d.error);
+    settings=d.settings;toast('✓ Settings saved','ok');closeSettings();render();
+  }catch(e){toast(e.message,'err')}
 }
 
-async function disconnect() {
-  if (!confirm('Disconnect YouTube Music account?')) return;
-  await fetch('/api/auth', {method:'DELETE'});
-  location.reload();
+function checkPrompts(){
+  if('Notification'in window&&Notification.permission==='default'&&vapidKey)document.getElementById('bar-push').style.display='flex';
+  const isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  const standalone=window.matchMedia('(display-mode: standalone)').matches;
+  if(isIOS&&!standalone){document.getElementById('install-msg').textContent='On iPhone: tap Share → "Add to Home Screen" to get notifications';document.getElementById('install-btn').style.display='none';document.getElementById('bar-install').style.display='flex'}
 }
-
-// ── Push / install ────────────────────────────────────────────────────────────
-function checkPrompts() {
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const standalone = window.matchMedia('(display-mode: standalone)').matches;
-  if (isIOS && !standalone) {
-    document.getElementById('notice-add-text').textContent = 'Tap Share → "Add to Home Screen" to enable push notifications';
-    document.getElementById('notice-add').style.display = 'flex';
-    return;
-  }
-  if ('Notification' in window && Notification.permission === 'default' && vapidKey)
-    document.getElementById('notice-push').style.display = 'flex';
-  if (deferredInstall) {
-    document.getElementById('notice-add-btn').style.display = 'block';
-    document.getElementById('notice-add').style.display = 'flex';
-  }
-}
-
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault(); deferredInstall = e;
-  document.getElementById('notice-add-btn').style.display = 'block';
-  document.getElementById('notice-add').style.display = 'flex';
-});
-
-async function installApp() {
-  if (!deferredInstall) return;
-  deferredInstall.prompt();
-  const {outcome} = await deferredInstall.userChoice;
-  if (outcome === 'accepted') {
-    document.getElementById('notice-add').style.display = 'none';
-    deferredInstall = null;
-  }
-}
-
-async function enablePush() {
-  if (!vapidKey) { toast('Push not configured', 'err'); return; }
-  try {
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') { toast('Permission denied', 'err'); return; }
-    const reg = await navigator.serviceWorker.register('/service-worker.js');
+async function enablePush(){
+  if(!vapidKey){toast('Push not configured on server','err');return}
+  try{
+    const perm=await Notification.requestPermission();
+    if(perm!=='granted'){toast('Permission denied','err');return}
+    const reg=await navigator.serviceWorker.register('/service-worker.js');
     await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlB64(vapidKey)
-    });
-    const j = sub.toJSON();
-    await fetch('/api/push/subscribe', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({endpoint: j.endpoint, keys: j.keys})
-    });
-    document.getElementById('notice-push').style.display = 'none';
-    toast('🔔 Notifications enabled!', 'ok');
-  } catch(e) { toast(e.message, 'err'); }
+    const sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlB64(vapidKey)});
+    const j=sub.toJSON();
+    await fetch('/api/push/subscribe',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({endpoint:j.endpoint,keys:j.keys})});
+    document.getElementById('bar-push').style.display='none';toast('🔔 Notifications enabled!','ok');
+  }catch(e){toast(e.message,'err')}
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function urlB64(s) {
-  const pad = '='.repeat((4 - s.length % 4) % 4);
-  const raw = atob((s + pad).replace(/-/g,'+').replace(/_/g,'/'));
-  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-}
-function esc(s) {
-  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-function toast(msg, type = 'ok') {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.className = `toast ${type} show`;
-  clearTimeout(t._timer);
-  t._timer = setTimeout(() => t.classList.remove('show'), 3000);
-}
+function urlB64(s){const pad='='.repeat((4-s.length%4)%4);const raw=atob((s+pad).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...raw].map(c=>c.charCodeAt(0)))}
+function esc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+async function disconnect(){if(!confirm('Disconnect YouTube Music? You will need to re-authenticate.'))return;await fetch('/api/auth',{method:'DELETE'});location.reload()}
+function toast(msg,type='ok'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),3000)}
 
 init();
 </script>
