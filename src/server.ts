@@ -1,17 +1,10 @@
 import express from 'express';
-import path from 'path';
-import { initPush } from './push';
-import { router as api } from './routes/api';
 
-const app  = express();
+const app = express();
 const PORT = Number(process.env['PORT'] ?? 3000);
 
-app.use(express.json());
-app.use(express.static(path.join(__dirname, '..', 'static')));
-app.use('/api', api);
-app.get('*', (_req, res) =>
-  res.sendFile(path.join(__dirname, '..', 'static', 'index.html'))
-);
+app.get('/', (_req, res) => res.json({ ok: true, port: PORT }));
 
-initPush();
-app.listen(PORT, '0.0.0.0', () => console.log(`🎵 Unplayed on http://0.0.0.0:${PORT}`));
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`listening on 0.0.0.0:${PORT}`);
+});
