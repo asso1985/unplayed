@@ -5,6 +5,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "start-dev": "DATA_DIR=. npm run start",
     "cron": "node dist/scripts/sync-and-remind.js",
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "migrate": "node dist/scripts/migrate-json.js"
