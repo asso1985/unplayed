@@ -139,3 +139,14 @@ router.post('/push/subscribe', (req: Request, res: Response) => {
   pushStore.add(sub);
   res.json({ ok: true });
 });
+
+// ── Manual cron trigger (for testing) ────────────────────────────────────────
+router.post('/cron/run', async (_req, res: Response) => {
+  try {
+    const { main } = await import('../scripts/sync-and-remind');
+    await main();
+    res.json({ ok: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
