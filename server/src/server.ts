@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import cookieParser from 'cookie-parser';
@@ -12,10 +13,11 @@ const PORT = Number(process.env['PORT'] ?? 3000);
 app.use(express.json());
 app.use(cookieParser());
 app.use(sessionMiddleware);
-app.use(express.static(path.join(__dirname, '..', 'static')));
+const CLIENT_DIR = path.join(__dirname, '..', '..', 'client-dist');
+app.use(express.static(CLIENT_DIR));
 app.use('/api', api);
 app.get('*', (_req, res) =>
-  res.sendFile(path.join(__dirname, '..', 'static', 'index.html'))
+  res.sendFile(path.join(CLIENT_DIR, 'index.html'))
 );
 
 initPush();
