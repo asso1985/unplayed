@@ -93,8 +93,8 @@ export async function getLibraryAlbums(
 ): Promise<YTMAlbum[]> {
   const context = {
     client: {
-      clientName: 'WEB_REMIX',
-      clientVersion: '1.20240101.01.00',
+      clientName: 'TVHTML5',
+      clientVersion: '7.20240101.00.00',
       hl: 'en',
       gl: 'US',
     },
@@ -105,11 +105,6 @@ export async function getLibraryAlbums(
     'Authorization': `Bearer ${accessToken}`,
     'X-Goog-AuthUser': '0',
     'Accept': '*/*',
-    'Accept-Language': 'en-US,en;q=0.9',
-    'Origin': 'https://music.youtube.com',
-    'x-origin': 'https://music.youtube.com',
-    'Referer': 'https://music.youtube.com/',
-    'X-Goog-Visitor-Id': '',
   };
 
   const albums: YTMAlbum[] = [];
@@ -119,7 +114,7 @@ export async function getLibraryAlbums(
     const body: Record<string, unknown> = { context, browseId: 'FEmusic_liked_albums' };
     if (continuation) body['continuation'] = continuation;
 
-    const res = await fetch('https://music.youtube.com/youtubei/v1/browse?alt=json', {
+    const res = await fetch('https://youtubei.googleapis.com/youtubei/v1/browse', {
       method: 'POST',
       headers: requestHeaders,
       body: JSON.stringify(body),
