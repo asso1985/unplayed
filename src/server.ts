@@ -14,4 +14,4 @@ app.get('*', (_req, res) =>
 );
 
 initPush();
-app.listen(PORT, () => console.log(`🎵 Unplayed on http://localhost:${PORT}`));
+app.listen(Number(PORT), '0.0.0.0', () => console.log(`🎵 Unplayed on http://0.0.0.0:${PORT}`));
