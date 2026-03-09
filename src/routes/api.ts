@@ -206,5 +206,5 @@ router.get('/debug/ytm', async (_req, res: Response) => {
     }),
   });
   const full = await r2.text();
-  res.json({ status: r2.status, body: full.slice(0, 5000) });
+  res.json({ status: r2.status, body: full.slice(0, 15000) });
 });
