@@ -122,7 +122,11 @@ export interface SpotifyAlbum {
   year:        string;
   thumbnail:   string;
   releaseType: ReleaseType;
+  savedAt:     string; // ISO timestamp from Spotify's added_at
 }
+
+/** Only import albums saved within this many months */
+const LOOKBACK_MONTHS = 3;
 
 type SpotifyAlbumType = 'album' | 'single' | 'compilation';
 
@@ -151,10 +155,13 @@ interface SpotifyPagedResponse {
   total: number;
 }
 
-/** Fetch all saved albums from the user's Spotify library (paginated) */
+/** Fetch saved albums from the user's Spotify library, newest-first, up to LOOKBACK_MONTHS old */
 export async function getSpotifyLibraryAlbums(accessToken: string): Promise<SpotifyAlbum[]> {
   const albums: SpotifyAlbum[] = [];
   let url: string | null = 'https://api.spotify.com/v1/me/albums?limit=50';
+
+  const cutoff = new Date();
+  cutoff.setMonth(cutoff.getMonth() - LOOKBACK_MONTHS);
 
   while (url) {
     const res = await fetch(url, {
@@ -169,6 +176,11 @@ export async function getSpotifyLibraryAlbums(accessToken: string): Promise<Spot
     const page = await res.json() as SpotifyPagedResponse;
 
     for (const item of page.items) {
+      // Results are newest-first — first item older than cutoff means we're done
+      if (new Date(item.added_at) < cutoff) {
+        url = null;
+        break;
+      }
       const a = item.album;
       albums.push({
         id:          a.id,
@@ -177,10 +189,11 @@ export async function getSpotifyLibraryAlbums(accessToken: string): Promise<Spot
         year:        a.release_date?.substring(0, 4) ?? '',
         thumbnail:   a.images[0]?.url ?? '',
         releaseType: mapReleaseType(a.album_type),
+        savedAt:     item.added_at,
       });
     }
 
-    url = page.next;
+    if (url) url = page.next;
   }
 
   return albums;

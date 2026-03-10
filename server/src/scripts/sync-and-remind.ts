@@ -60,7 +60,7 @@ async function syncUser(user: SyncUser) {
       year:          item.year,
       thumbnail:     item.thumbnail,
       releaseType:   item.releaseType,
-      savedAt:       new Date().toISOString(),
+      savedAt:       'savedAt' in item ? item.savedAt : new Date().toISOString(),
       snoozedUntil:  null,
       silenced:      false,
       remindersSent: [],
