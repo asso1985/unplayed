@@ -83,11 +83,11 @@ export default function SetupPage() {
               <div className="setup-card">
                 <h3>Get started</h3>
                 <Flex direction="column" gap={12} style={{ width: '100%' }}>
-                  <button className="btn-main" onClick={() => setStep('ytm')}>
-                    YouTube Music
-                  </button>
                   <button className="btn-main btn-spotify" onClick={handleSpotify}>
                     Spotify
+                  </button>
+                  <button className="btn-main btn-ytm" onClick={() => setStep('ytm')}>
+                    YouTube Music
                   </button>
                   <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '-4px 0 0', textAlign: 'center', lineHeight: 1.5 }}>
                     Requires an active Spotify Premium subscription
