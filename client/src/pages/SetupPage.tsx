@@ -86,12 +86,12 @@ export default function SetupPage() {
                   <button className="btn-main btn-spotify" onClick={handleSpotify}>
                     Spotify
                   </button>
-                  <button className="btn-main btn-ytm" onClick={() => setStep('ytm')}>
-                    YouTube Music
-                  </button>
                   <p style={{ fontSize: '11px', color: 'var(--muted)', margin: '-4px 0 0', textAlign: 'center', lineHeight: 1.5 }}>
                     Requires an active Spotify Premium subscription
                   </p>
+                  <button className="btn-main btn-ytm" onClick={() => setStep('ytm')}>
+                    YouTube Music
+                  </button>
                 </Flex>
               </div>
             )}
