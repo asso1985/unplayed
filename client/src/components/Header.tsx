@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
+import Flex from './Flex';
 
 export default function Header() {
   const { lastSync, loadAlbums, setLastSync, showToast } = useApp();
@@ -27,9 +28,9 @@ export default function Header() {
 
   return (
     <header id="header">
-      <div className="hdr-logo">
+      <Flex align="center" gap={9}>
         <span className="hdr-title">un<em>played</em></span>
-      </div>
+      </Flex>
       <div className="hdr-spacer"></div>
       {syncTime && (
         <div className="hdr-status">
