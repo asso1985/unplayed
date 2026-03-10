@@ -97,10 +97,18 @@ router.post('/auth/poll', async (req: Request, res: Response) => {
 router.delete('/auth', (req: Request, res: Response) => {
   const userId = requireUser(req, res);
   if (!userId) return;
+  // Delete child records first (FK order)
   db.deleteTokens(userId);
+  db.deleteUserAlbums(userId);
+  db.deleteUserPushSubs(userId);
+  db.deleteUserSettings(userId);
+  // Unlink session so req.userId is null on next request
+  db.unlinkSession(req.sessionId);
+  // Clear any in-progress auth state
   db.setDeviceCode(req.sessionId, null);
   db.clearOAuthState(req.sessionId);
-  db.deleteUserAlbums(userId);
+  // Delete the user record (no FK references remain)
+  db.deleteUser(userId);
   res.json({ ok: true });
 });
 

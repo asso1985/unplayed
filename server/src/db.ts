@@ -181,6 +181,30 @@ export function deleteTokens(userId: string): void {
   _deleteTokens.run(userId);
 }
 
+const _deleteUserPushSubs = sqlite.prepare(`DELETE FROM push_subs WHERE user_id = ?`);
+
+export function deleteUserPushSubs(userId: string): void {
+  _deleteUserPushSubs.run(userId);
+}
+
+const _deleteUserSettings = sqlite.prepare(`DELETE FROM settings WHERE user_id = ?`);
+
+export function deleteUserSettings(userId: string): void {
+  _deleteUserSettings.run(userId);
+}
+
+const _unlinkSession = sqlite.prepare(`UPDATE sessions SET user_id = NULL WHERE id = ?`);
+
+export function unlinkSession(sessionId: string): void {
+  _unlinkSession.run(sessionId);
+}
+
+const _deleteUser = sqlite.prepare(`DELETE FROM users WHERE id = ?`);
+
+export function deleteUser(userId: string): void {
+  _deleteUser.run(userId);
+}
+
 const _deleteUserAlbums = sqlite.prepare('DELETE from albums WHERE user_id = ?')
 
 export function deleteUserAlbums(userId: string): void {

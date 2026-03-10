@@ -51,10 +51,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const loadStatus = useCallback(async () => {
     const status = await api.getStatus();
+    
+    setProvider(status.provider);
     setAuthReady(status.authReady);
     setLastSync(status.lastSync);
     setVapidKey(status.pushKey);
-    setProvider(status.provider);
     return status;
   }, []);
 
