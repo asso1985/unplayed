@@ -11,3 +11,4 @@ auth.json
 .env
 test-ytm.mjs
 .claude/worktrees/
+.DS_Store

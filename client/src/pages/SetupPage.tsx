@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
 import Flex from '@/components/Flex';
+import LogoMark from '@/components/LogoMark';
 
 export default function SetupPage() {
   const { loadStatus, loadAlbums, showToast } = useApp();
@@ -64,7 +65,7 @@ export default function SetupPage() {
       <div id="content">
         <div className="page active">
           <Flex direction="column" align="center" justify="center" className="setup-wrap">
-            <img src="/logo.svg" className="setup-icon" alt="Unplayed" />
+            <LogoMark size={76} className="setup-icon" />
             <h1 className="setup-title">Connect YouTube Music</h1>
             <p className="setup-sub">
               Sign in once with Google OAuth.<br />No passwords. No cookie pasting. Ever.
