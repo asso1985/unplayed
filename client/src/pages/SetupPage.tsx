@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
 
@@ -16,22 +16,7 @@ export default function SetupPage() {
     return () => { clearInterval(pollRef.current); };
   }, []);
 
-  async function handleStart() {
-    setLoading(true);
-    try {
-      const result = await api.startAuth();
-      setUserCode(result.userCode);
-      setExpiryMin(Math.round(result.expiresIn / 60));
-      setStep(2);
-      startPolling(result.interval || 5);
-    } catch (e) {
-      showToast((e as Error).message, 'err');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  function startPolling(interval: number) {
+  const startPolling = useCallback((interval: number) => {
     let dotCount = 0;
     pollRef.current = setInterval(async () => {
       dotCount = (dotCount + 1) % 4;
@@ -51,7 +36,22 @@ export default function SetupPage() {
         }
       } catch { /* ignore poll errors */ }
     }, interval * 1000);
-  }
+  }, [showToast, loadStatus, loadAlbums]);
+
+  const handleStart = useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await api.startAuth();
+      setUserCode(result.userCode);
+      setExpiryMin(Math.round(result.expiresIn / 60));
+      setStep(2);
+      startPolling(result.interval || 5);
+    } catch (e) {
+      showToast((e as Error).message, 'err');
+    } finally {
+      setLoading(false);
+    }
+  }, [showToast, startPolling]);
 
   return (
     <div id="app">
