@@ -3,7 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { ulid } from 'ulid';
 import type { OAuthTokens } from './oauth';
-import { Album, Settings, PushSub, ReleaseType, DEFAULT_SETTINGS } from './types';
+import { Album, Settings, PushSub, ReleaseType, Provider, DEFAULT_SETTINGS } from './types';
 
 const DATA_DIR = process.env['DATA_DIR'] ?? path.resolve('.');
 fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -61,51 +61,79 @@ sqlite.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS sessions (
-    id          TEXT PRIMARY KEY,
-    user_id     TEXT REFERENCES users(id),
-    device_code TEXT,
-    created_at  TEXT NOT NULL,
-    expires_at  TEXT NOT NULL
+    id               TEXT PRIMARY KEY,
+    user_id          TEXT REFERENCES users(id),
+    device_code      TEXT,
+    oauth_state      TEXT,
+    oauth_expires_at TEXT,
+    created_at       TEXT NOT NULL,
+    expires_at       TEXT NOT NULL
   );
 `);
+
+// ── Migrations (safe to re-run) ────────────────────────────────────────────────
+
+const userCols = (sqlite.pragma('table_info(users)') as { name: string }[]).map(c => c.name);
+if (!userCols.includes('provider')) {
+  sqlite.exec("ALTER TABLE users ADD COLUMN provider TEXT NOT NULL DEFAULT 'youtube'");
+}
+
+const sessCols = (sqlite.pragma('table_info(sessions)') as { name: string }[]).map(c => c.name);
+if (!sessCols.includes('oauth_state')) {
+  sqlite.exec('ALTER TABLE sessions ADD COLUMN oauth_state TEXT');
+}
+if (!sessCols.includes('oauth_expires_at')) {
+  sqlite.exec('ALTER TABLE sessions ADD COLUMN oauth_expires_at TEXT');
+}
 
 // ── Users ──────────────────────────────────────────────────────────────────────
 
 const _insertUser = sqlite.prepare(
-  `INSERT INTO users (id, created_at) VALUES (?, ?)`
+  `INSERT INTO users (id, provider, created_at) VALUES (?, ?, ?)`
 );
 
-export function createUser(): string {
+export function createUser(provider: Provider = 'youtube'): string {
   const id = ulid();
-  _insertUser.run(id, new Date().toISOString());
+  _insertUser.run(id, provider, new Date().toISOString());
   return id;
 }
 
 interface UserWithTokens {
   id: string;
   lastSync: string | null;
+  provider: Provider;
   tokens: OAuthTokens;
 }
 
 const _usersWithTokens = sqlite.prepare(`
-  SELECT u.id, u.last_sync, t.access_token, t.refresh_token, t.expires_at
+  SELECT u.id, u.last_sync, u.provider, t.access_token, t.refresh_token, t.expires_at
   FROM users u JOIN tokens t ON u.id = t.user_id
 `);
 
 export function getAllUsersWithTokens(): UserWithTokens[] {
   const rows = _usersWithTokens.all() as {
-    id: string; last_sync: string | null;
+    id: string; last_sync: string | null; provider: string;
     access_token: string; refresh_token: string; expires_at: number;
   }[];
   return rows.map(r => ({
     id: r.id,
     lastSync: r.last_sync,
+    provider: (r.provider ?? 'youtube') as Provider,
     tokens: {
       accessToken: r.access_token,
       refreshToken: r.refresh_token,
       expiresAt: r.expires_at,
     },
   }));
+}
+
+const _getUserProvider = sqlite.prepare(
+  `SELECT provider FROM users WHERE id = ?`
+);
+
+export function getUserProvider(userId: string): Provider {
+  const row = _getUserProvider.get(userId) as { provider: string } | undefined;
+  return (row?.provider ?? 'youtube') as Provider;
 }
 
 const _setLastSync = sqlite.prepare(
@@ -320,6 +348,8 @@ export interface Session {
   id: string;
   userId: string | null;
   deviceCode: string | null;
+  oauthState: string | null;
+  oauthExpiresAt: string | null;
   createdAt: string;
   expiresAt: string;
 }
@@ -338,16 +368,17 @@ export function createSession(userId?: string): Session {
   const createdAt = now.toISOString();
   const expiresAt = expires.toISOString();
   _insertSession.run(id, userId ?? null, createdAt, expiresAt);
-  return { id, userId: userId ?? null, deviceCode: null, createdAt, expiresAt };
+  return { id, userId: userId ?? null, deviceCode: null, oauthState: null, oauthExpiresAt: null, createdAt, expiresAt };
 }
 
 const _getSession = sqlite.prepare(
-  `SELECT id, user_id, device_code, created_at, expires_at FROM sessions WHERE id = ?`
+  `SELECT id, user_id, device_code, oauth_state, oauth_expires_at, created_at, expires_at FROM sessions WHERE id = ?`
 );
 
 export function getSession(id: string): Session | null {
   const row = _getSession.get(id) as {
     id: string; user_id: string | null; device_code: string | null;
+    oauth_state: string | null; oauth_expires_at: string | null;
     created_at: string; expires_at: string;
   } | undefined;
   if (!row) return null;
@@ -355,6 +386,8 @@ export function getSession(id: string): Session | null {
     id: row.id,
     userId: row.user_id,
     deviceCode: row.device_code,
+    oauthState: row.oauth_state,
+    oauthExpiresAt: row.oauth_expires_at,
     createdAt: row.created_at,
     expiresAt: row.expires_at,
   };
@@ -374,6 +407,22 @@ const _setDeviceCode = sqlite.prepare(
 
 export function setDeviceCode(sessionId: string, code: string | null): void {
   _setDeviceCode.run(code, sessionId);
+}
+
+const _setOAuthState = sqlite.prepare(
+  `UPDATE sessions SET oauth_state = ?, oauth_expires_at = ? WHERE id = ?`
+);
+
+export function setOAuthState(sessionId: string, state: string, expiresAt: string): void {
+  _setOAuthState.run(state, expiresAt, sessionId);
+}
+
+const _clearOAuthState = sqlite.prepare(
+  `UPDATE sessions SET oauth_state = NULL, oauth_expires_at = NULL WHERE id = ?`
+);
+
+export function clearOAuthState(sessionId: string): void {
+  _clearOAuthState.run(sessionId);
 }
 
 const _clearExpired = sqlite.prepare(

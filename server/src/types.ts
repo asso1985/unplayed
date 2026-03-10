@@ -1,4 +1,5 @@
 export type ReleaseType = 'Album' | 'EP' | 'Single' | 'Unknown';
+export type Provider = 'youtube' | 'spotify';
 
 
 export interface Album {

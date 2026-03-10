@@ -19,11 +19,16 @@ export async function sendPush(
   const subs = db.getPushSubs(userId);
   if (!subs.length) return;
 
+  const provider = db.getUserProvider(userId);
+  const url = provider === 'spotify'
+    ? `https://open.spotify.com/album/${album.id}`
+    : `https://music.youtube.com/browse/${album.id}`;
+
   const payload = JSON.stringify({
     title,
     body,
     icon: album.thumbnail || '/icons/icon-192.png',
-    url: `https://music.youtube.com/browse/${album.id}`,
+    url,
     albumId: album.id,
   });
 

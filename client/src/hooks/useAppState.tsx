@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
-import type { Album, Settings, StatusResponse, BeforeInstallPromptEvent } from '@/types';
+import type { Album, Settings, StatusResponse, Provider, BeforeInstallPromptEvent } from '@/types';
 import { api } from '@/lib/api';
 
 interface Toast { message: string; type: 'ok' | 'err' }
@@ -8,6 +8,7 @@ interface AppState {
   authReady: boolean | null;
   lastSync: string | null;
   vapidKey: string;
+  provider: Provider | null;
   albums: Album[];
   settings: Settings;
   toast: Toast | null;
@@ -35,6 +36,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [authReady, setAuthReady] = useState<boolean | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
   const [vapidKey, setVapidKey] = useState('');
+  const [provider, setProvider] = useState<Provider | null>(null);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [toast, setToast] = useState<Toast | null>(null);
@@ -52,6 +54,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAuthReady(status.authReady);
     setLastSync(status.lastSync);
     setVapidKey(status.pushKey);
+    setProvider(status.provider);
     return status;
   }, []);
 
@@ -72,7 +75,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      authReady, lastSync, vapidKey,
+      authReady, lastSync, vapidKey, provider,
       albums, settings, toast, deferredInstall,
       showToast, loadStatus, loadAlbums,
       setAlbums, setSettings, setAuthReady, setLastSync, setDeferredInstall,

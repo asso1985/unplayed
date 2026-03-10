@@ -1,4 +1,5 @@
 export type ReleaseType = 'Album' | 'EP' | 'Single' | 'Unknown';
+export type Provider = 'youtube' | 'spotify';
 
 export interface Album {
   id: string;
@@ -26,6 +27,7 @@ export interface StatusResponse {
   albumCount: number;
   lastSync: string | null;
   pushKey: string;
+  provider: Provider | null;
 }
 
 export interface AlbumsResponse {

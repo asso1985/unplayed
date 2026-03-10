@@ -2,45 +2,64 @@
  * sync-and-remind.ts
  * Run by cron every 6 hours (in-process via node-cron).
  * Iterates all users with OAuth tokens:
- *   1. Auto-refreshes each user's access token
- *   2. Pulls latest liked albums from YT Music
+ *   1. Auto-refreshes each user's access token (provider-aware)
+ *   2. Pulls latest saved albums (YouTube Music or Spotify)
  *   3. Adds new ones to the DB (filtered by allowedTypes)
  *   4. Fires any due push notifications
  */
 import * as db from '../db';
-import { getLibraryAlbums } from '../ytmusic';
+import { getLibraryAlbums as getYTMLibraryAlbums } from '../ytmusic';
+import { getSpotifyLibraryAlbums, getValidSpotifyToken } from '../spotify';
 import { initPush, sendPush } from '../push';
 import { runRemindersForUser } from '../reminders';
 import { getValidAccessToken } from '../oauth';
 import { Album } from '../types';
+import type { OAuthTokens } from '../oauth';
+import type { Provider } from '../types';
 
-async function syncUser(user: { id: string; lastSync: string | null; tokens: import('../oauth').OAuthTokens }) {
-  // Auto-refresh token if expiring soon
+interface SyncUser {
+  id: string;
+  lastSync: string | null;
+  provider: Provider;
+  tokens: OAuthTokens;
+}
+
+async function syncUser(user: SyncUser) {
+  // Auto-refresh token if expiring soon (provider-aware)
   let tokens = user.tokens;
-  const fresh = await getValidAccessToken(tokens);
+  const fresh = user.provider === 'spotify'
+    ? await getValidSpotifyToken(tokens)
+    : await getValidAccessToken(tokens);
+
   if (fresh.accessToken !== tokens.accessToken) {
     db.upsertTokens(user.id, fresh);
     console.log(`  ✓ Token refreshed for ${user.id}`);
     tokens = fresh;
   }
 
-  // Sync albums
-  const fetched = await getLibraryAlbums(tokens.accessToken);
+  // Fetch library (provider-aware)
+  const fetched = user.provider === 'spotify'
+    ? await getSpotifyLibraryAlbums(tokens.accessToken)
+    : await getYTMLibraryAlbums(tokens.accessToken);
+
   const settings = db.getSettings(user.id);
   let added = 0;
 
-  for (const ytm of fetched) {
-    if (db.albumExists(user.id, ytm.browseId)) continue;
+  for (const item of fetched) {
+    // Both YTMAlbum and SpotifyAlbum expose: id (or browseId), title, artist, year, thumbnail, releaseType
+    const albumId = 'browseId' in item ? item.browseId : item.id;
+
+    if (db.albumExists(user.id, albumId)) continue;
     // Respect allowed release types
-    if (ytm.releaseType !== 'Unknown' && !settings.allowedTypes.includes(ytm.releaseType)) continue;
+    if (item.releaseType !== 'Unknown' && !settings.allowedTypes.includes(item.releaseType)) continue;
 
     const album: Album = {
-      id:            ytm.browseId,
-      title:         ytm.title,
-      artist:        ytm.artist,
-      year:          ytm.year,
-      thumbnail:     ytm.thumbnail,
-      releaseType:   ytm.releaseType,
+      id:            albumId,
+      title:         item.title,
+      artist:        item.artist,
+      year:          item.year,
+      thumbnail:     item.thumbnail,
+      releaseType:   item.releaseType,
       savedAt:       new Date().toISOString(),
       snoozedUntil:  null,
       silenced:      false,
@@ -51,7 +70,7 @@ async function syncUser(user: { id: string; lastSync: string | null; tokens: imp
   }
 
   db.setLastSync(user.id, new Date().toISOString());
-  console.log(`  ✓ Sync — ${added} new, ${fetched.length} total in library`);
+  console.log(`  ✓ Sync [${user.provider}] — ${added} new, ${fetched.length} total in library`);
 }
 
 async function main() {
@@ -65,7 +84,7 @@ async function main() {
   }
 
   for (const user of users) {
-    console.log(`Processing user ${user.id}…`);
+    console.log(`Processing user ${user.id} [${user.provider}]…`);
     try {
       await syncUser(user);
     } catch (err: unknown) {
@@ -81,7 +100,7 @@ async function main() {
             releaseType: 'Unknown', savedAt: '', snoozedUntil: null,
             silenced: false, remindersSent: [] },
           '🔐 Unplayed needs re-authentication',
-          'Your YouTube Music connection expired. Open Unplayed to reconnect.'
+          'Your music connection expired. Open Unplayed to reconnect.'
         );
       }
     }

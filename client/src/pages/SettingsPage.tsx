@@ -8,7 +8,7 @@ import TypeSettings from '@/components/TypeSettings';
 import NotifyTimeSettings from '@/components/NotifyTimeSettings';
 
 export default function SettingsPage() {
-  const { settings, setSettings, setAuthReady, showToast } = useApp();
+  const { settings, setSettings, setAuthReady, showToast, provider } = useApp();
   const navigate = useNavigate();
 
   // Local working copy
@@ -37,19 +37,21 @@ export default function SettingsPage() {
     }
   }, [reminderDays, allowedTypes, notifyHour, showToast, setSettings]);
 
+  const providerName = provider === 'spotify' ? 'Spotify' : 'YouTube Music';
+
   const handleDisconnect = useCallback(async () => {
-    if (!confirm('Disconnect YouTube Music account?')) return;
+    if (!confirm(`Disconnect ${providerName} account?`)) return;
     await api.deleteAuth();
     setAuthReady(false);
     navigate('/setup');
-  }, [setAuthReady, navigate]);
+  }, [providerName, setAuthReady, navigate]);
 
   return (
     <div className="settings-content">
       <div className="account-card">
         <span className="acct-dot"></span>
         <div className="acct-info">
-          <div className="acct-name">YouTube Music</div>
+          <div className="acct-name">{providerName}</div>
           <div className="acct-sub">Connected · syncs every 6 hours</div>
         </div>
       </div>
