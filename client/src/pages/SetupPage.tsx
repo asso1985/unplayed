@@ -29,10 +29,11 @@ export default function SetupPage() {
         const result = await api.pollAuth();
         if (result.status === 'approved') {
           clearInterval(pollRef.current);
-          showToast('✓ Connected!');
-          // loadStatus will set authReady=true, causing App.tsx to redirect to /
+          showToast('✓ Connected! Syncing library…');
+          // loadStatus sets authReady=true → App.tsx navigates to library
           await loadStatus();
-          await loadAlbums();
+          // Fire first sync immediately so albums appear without waiting for cron
+          api.runSync().then(() => loadAlbums()).catch(() => loadAlbums());
         } else if (result.status === 'expired') {
           clearInterval(pollRef.current);
           showToast('Code expired — try again', 'err');
