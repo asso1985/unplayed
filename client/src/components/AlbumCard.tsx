@@ -47,6 +47,10 @@ export default function AlbumCard({ album, settings }: Props) {
   }, [album.id, setAlbums, showToast]);
 
   const handleSilence = useCallback(async () => {
+    if (!confirm(`Stop reminders for "${album.title}"? This cannot be undone.`)) {
+      return
+    };
+
     setRemoving(true);
     await api.silenceAlbum(album.id);
     setTimeout(() => {
