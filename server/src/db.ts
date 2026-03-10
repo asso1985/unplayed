@@ -181,6 +181,12 @@ export function deleteTokens(userId: string): void {
   _deleteTokens.run(userId);
 }
 
+const _deleteUserAlbums = sqlite.prepare('DELETE from albums WHERE user_id = ?')
+
+export function deleteUserAlbums(userId: string): void {
+  _deleteUserAlbums.run(userId);
+}
+
 // ── Albums ─────────────────────────────────────────────────────────────────────
 
 const _getAlbums = sqlite.prepare(

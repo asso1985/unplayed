@@ -100,6 +100,7 @@ router.delete('/auth', (req: Request, res: Response) => {
   db.deleteTokens(userId);
   db.setDeviceCode(req.sessionId, null);
   db.clearOAuthState(req.sessionId);
+  db.deleteUserAlbums(userId);
   res.json({ ok: true });
 });
 
