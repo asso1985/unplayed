@@ -1,6 +1,7 @@
 import { useApp } from '@/hooks/useAppState';
 import NoticeBar from '@/components/NoticeBar';
 import AlbumGrid from '@/components/AlbumGrid';
+import Flex from '@/components/Flex';
 
 export default function LibraryPage() {
   const { albums } = useApp();
@@ -8,11 +9,11 @@ export default function LibraryPage() {
   return (
     <div className="lib-content">
       <NoticeBar />
-      <div className="lib-topbar">
+      <Flex align="center" justify="space-between" style={{ marginBottom: 14 }}>
         <div className="lib-count">
           <strong>{albums.length}</strong> albums
         </div>
-      </div>
+      </Flex>
       <AlbumGrid />
     </div>
   );

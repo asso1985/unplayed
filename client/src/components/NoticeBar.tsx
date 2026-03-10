@@ -30,7 +30,7 @@ export default function NoticeBar() {
   return (
     <>
       {showInstall && (
-        <div className="notice add-notice" style={{ display: 'flex' }}>
+        <div className="notice add-notice">
           <span className="notice-icon">📲</span>
           <span className="notice-body">
             {isIOS
@@ -43,7 +43,7 @@ export default function NoticeBar() {
         </div>
       )}
       {showPush && (
-        <div className="notice push-notice" style={{ display: 'flex' }}>
+        <div className="notice push-notice">
           <span className="notice-icon">🔔</span>
           <span className="notice-body">Enable notifications to get reminded about unplayed albums</span>
           <button className="notice-btn" onClick={handlePush}>Enable</button>

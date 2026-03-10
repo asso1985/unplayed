@@ -45,7 +45,6 @@ body {
   z-index: 100;
 }
 
-.hdr-logo { display: flex; align-items: center; gap: 9px; }
 .hdr-title { font-size: 17px; font-weight: 800; letter-spacing: -0.3px; }
 .hdr-title em { color: var(--accent); font-style: normal; }
 .hdr-spacer { flex: 1; }
@@ -115,12 +114,11 @@ body {
 
 /* ─── Library ─── */
 .lib-content { padding: 14px 14px 24px; }
-.lib-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .lib-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
 .lib-count strong { font-size: 20px; font-family: 'Syne', sans-serif; font-weight: 800; color: var(--accent); margin-right: 3px; }
 
 .notice {
-  display: none; align-items: center; gap: 10px;
+  display: flex; align-items: center; gap: 10px;
   background: var(--surf); border: 1px solid var(--border);
   border-radius: 12px; padding: 11px 13px; margin-bottom: 11px;
   font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); line-height: 1.5;
@@ -206,7 +204,6 @@ body {
 
 /* ─── Setup ─── */
 .setup-wrap {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
   min-height: 70vh; padding: 32px 20px; text-align: center;
 }
 .setup-icon { width: 76px; height: 76px; border-radius: 18px; margin-bottom: 20px; box-shadow: 0 12px 40px rgba(0,0,0,.5); }

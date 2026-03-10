@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
+import Flex from '@/components/Flex';
 
 export default function SetupPage() {
   const { loadStatus, loadAlbums, showToast } = useApp();
@@ -56,13 +57,13 @@ export default function SetupPage() {
   return (
     <div id="app">
       <header id="header">
-        <div className="hdr-logo">
+        <Flex align="center" gap={9}>
           <span className="hdr-title">un<em>played</em></span>
-        </div>
+        </Flex>
       </header>
       <div id="content">
         <div className="page active">
-          <div className="setup-wrap">
+          <Flex direction="column" align="center" justify="center" className="setup-wrap">
             <img src="/logo.svg" className="setup-icon" alt="Unplayed" />
             <h1 className="setup-title">Connect YouTube Music</h1>
             <p className="setup-sub">
@@ -100,7 +101,7 @@ export default function SetupPage() {
                 </p>
               </div>
             )}
-          </div>
+          </Flex>
         </div>
       </div>
     </div>
