@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
@@ -23,7 +23,7 @@ export default function SettingsPage() {
     setNotifyHour(settings.notifyHour);
   }, [settings]);
 
-  async function handleSave() {
+  const handleSave = useCallback(async () => {
     const days = reminderDays.filter(d => d > 0);
     if (!days.length) { showToast('Add at least one reminder day', 'err'); return; }
     if (!allowedTypes.length) { showToast('Select at least one type', 'err'); return; }
@@ -35,14 +35,14 @@ export default function SettingsPage() {
     } catch (e) {
       showToast((e as Error).message, 'err');
     }
-  }
+  }, [reminderDays, allowedTypes, notifyHour, showToast, setSettings]);
 
-  async function handleDisconnect() {
+  const handleDisconnect = useCallback(async () => {
     if (!confirm('Disconnect YouTube Music account?')) return;
     await api.deleteAuth();
     setAuthReady(false);
     navigate('/setup');
-  }
+  }, [setAuthReady, navigate]);
 
   return (
     <div className="settings-content">

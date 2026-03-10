@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { api } from '@/lib/api';
 
@@ -10,7 +10,7 @@ export default function Header() {
     ? new Date(lastSync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     : null;
 
-  async function handleSync() {
+  const handleSync = useCallback(async () => {
     if (syncing) return;
     setSyncing(true);
     try {
@@ -23,7 +23,7 @@ export default function Header() {
     } finally {
       setSyncing(false);
     }
-  }
+  }, [syncing, loadAlbums, setLastSync, showToast]);
 
   return (
     <header id="header">

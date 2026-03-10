@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useApp } from '@/hooks/useAppState';
 import { registerPushSubscription } from '@/lib/push';
 
@@ -9,14 +10,14 @@ export default function NoticeBar() {
   const showInstall = isIOS && !standalone;
   const showPush = 'Notification' in window && Notification.permission === 'default' && !!vapidKey;
 
-  async function handleInstall() {
+  const handleInstall = useCallback(async () => {
     if (!deferredInstall) return;
     deferredInstall.prompt();
     const { outcome } = await deferredInstall.userChoice;
     if (outcome === 'accepted') setDeferredInstall(null);
-  }
+  }, [deferredInstall, setDeferredInstall]);
 
-  async function handlePush() {
+  const handlePush = useCallback(async () => {
     if (!vapidKey) { showToast('Push not configured', 'err'); return; }
     try {
       await registerPushSubscription(vapidKey);
@@ -24,7 +25,7 @@ export default function NoticeBar() {
     } catch (e) {
       showToast((e as Error).message, 'err');
     }
-  }
+  }, [vapidKey, showToast]);
 
   return (
     <>

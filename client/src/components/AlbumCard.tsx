@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import type { Album, Settings } from '@/types';
 import { api } from '@/lib/api';
 import { useApp } from '@/hooks/useAppState';
@@ -33,7 +33,7 @@ export default function AlbumCard({ album, settings }: Props) {
     return () => document.removeEventListener('click', handleClick);
   }, [snoozeOpen]);
 
-  async function handleSnooze(days: number) {
+  const handleSnooze = useCallback(async (days: number) => {
     setSnoozeOpen(false);
     try {
       await api.snoozeAlbum(album.id, days);
@@ -44,16 +44,18 @@ export default function AlbumCard({ album, settings }: Props) {
     } catch {
       showToast('Failed to snooze', 'err');
     }
-  }
+  }, [album.id, setAlbums, showToast]);
 
-  async function handleSilence() {
+  const handleSilence = useCallback(async () => {
     setRemoving(true);
     await api.silenceAlbum(album.id);
     setTimeout(() => {
       setAlbums(prev => prev.filter(a => a.id !== album.id));
       showToast('✕ Reminder stopped');
     }, 250);
-  }
+  }, [album.id, setAlbums, showToast]);
+
+  const toggleSnooze = useCallback(() => setSnoozeOpen(o => !o), []);
 
   return (
     <div className={`card${removing ? ' removing' : ''}`} id={`card-${album.id}`}>
@@ -87,7 +89,7 @@ export default function AlbumCard({ album, settings }: Props) {
           Play
         </a>
         <div className="snooze-wrap" ref={wrapRef}>
-          <button className="btn-ic" onClick={() => setSnoozeOpen(o => !o)} title="Snooze">⏱</button>
+          <button className="btn-ic" onClick={toggleSnooze} title="Snooze">⏱</button>
           <SnoozePopup open={snoozeOpen} onSnooze={handleSnooze} />
         </div>
         <button className="btn-ic" onClick={handleSilence} title="Dismiss">✕</button>
