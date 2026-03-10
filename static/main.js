@@ -105,6 +105,9 @@ async function snooze(id, days) {
 }
 
 async function silence(id) {
+  const album = albums.find(a => a.id === id);
+  const label = album ? `"${album.title}"` : 'this album';
+  if (!confirm(`Stop reminders for ${label}? This cannot be undone.`)) return;
   document.getElementById('card-' + id)?.classList.add('removing');
   await fetch(`/api/albums/${id}/silence`, {method:'POST'});
   setTimeout(() => { albums = albums.filter(a => a.id !== id); renderAlbums(); toast('✕ Reminder stopped', 'ok'); }, 250);
