@@ -2,7 +2,7 @@ import { useApp } from '@/hooks/useAppState';
 import AlbumCard from './AlbumCard';
 
 export default function AlbumGrid() {
-  const { albums, settings } = useApp();
+  const { albums, settings, provider } = useApp();
 
   if (!albums.length) {
     return (
@@ -10,7 +10,7 @@ export default function AlbumGrid() {
         <div className="empty">
           <div className="empty-ico">🎵</div>
           <h3>No albums yet</h3>
-          <p>Save albums in YouTube Music.<br />They'll show up here after the next sync.</p>
+          <p>Save albums in {provider === 'spotify' ? 'Spotify' : 'YouTube Music'}.<br />They'll show up here after the next sync.</p>
         </div>
       </div>
     );
