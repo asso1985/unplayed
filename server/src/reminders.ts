@@ -1,5 +1,5 @@
 import * as db from './db';
-import { sendPush } from './push';
+import { sendPush, sendDigestPush } from './push';
 import { Album } from './types';
 
 export function daysSince(isoDate: string): number {
@@ -25,23 +25,40 @@ function reminderMessage(dayThreshold: number): { title: string; body: string } 
   return                         { title: '📀 Long time…',     body: `It's been ${dayThreshold} days. Don't let this one slip away.` };
 }
 
+/** If more than this many albums are due at once, send a single digest instead */
+const DIGEST_THRESHOLD = 2;
+
 export async function runRemindersForUser(userId: string): Promise<{ sent: number; skipped: number }> {
   const albums = db.getAllAlbums(userId);
   const settings = db.getSettings(userId);
-  let sent = 0, skipped = 0;
+  let skipped = 0;
 
+  // 1. Collect all due reminders
+  const due: { album: Album; day: number }[] = [];
   for (const album of albums) {
     if (album.silenced || isSnoozed(album)) { skipped++; continue; }
-
-    const due = nextDueReminder(album, settings.reminderDays);
-    if (due === null) { skipped++; continue; }
-
-    const { title, body } = reminderMessage(due);
-    await sendPush(userId, album, title, `${album.title} by ${album.artist} — ${body}`);
-    album.remindersSent.push(due);
-    db.updateRemindersSent(userId, album.id, album.remindersSent);
-    sent++;
+    const day = nextDueReminder(album, settings.reminderDays);
+    if (day === null) { skipped++; continue; }
+    due.push({ album, day });
   }
 
-  return { sent, skipped };
+  if (due.length === 0) return { sent: 0, skipped };
+
+  // 2. Mark all as reminded regardless of send mode
+  for (const { album, day } of due) {
+    album.remindersSent.push(day);
+    db.updateRemindersSent(userId, album.id, album.remindersSent);
+  }
+
+  // 3. Send: individual if few, digest if many
+  if (due.length <= DIGEST_THRESHOLD) {
+    for (const { album, day } of due) {
+      const { title, body } = reminderMessage(day);
+      await sendPush(userId, album, title, `${album.title} by ${album.artist} — ${body}`);
+    }
+  } else {
+    await sendDigestPush(userId, due.length);
+  }
+
+  return { sent: due.length, skipped };
 }

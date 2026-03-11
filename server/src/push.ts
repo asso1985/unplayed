@@ -2,6 +2,30 @@ import webpush from 'web-push';
 import * as db from './db';
 import { Album } from './types';
 
+export async function sendDigestPush(userId: string, count: number): Promise<void> {
+  const subs = db.getPushSubs(userId);
+  if (!subs.length) return;
+
+  const payload = JSON.stringify({
+    title:   `📀 ${count} albums need a listen`,
+    body:    "Open Unplayed to see what's waiting.",
+    icon:    '/icons/icon-192.png',
+    url:     '/',
+    albumId: '',
+  });
+
+  const dead: string[] = [];
+  await Promise.allSettled(subs.map(async sub => {
+    try { await webpush.sendNotification(sub, payload); }
+    catch (err: unknown) {
+      const status = (err as { statusCode?: number }).statusCode;
+      if (status === 404 || status === 410) dead.push(sub.endpoint);
+      else console.error('Push error', status, sub.endpoint.slice(0, 40));
+    }
+  }));
+  dead.forEach(ep => db.removePushSub(ep));
+}
+
 export function initPush(): void {
   const pub  = process.env['VAPID_PUBLIC_KEY'];
   const priv = process.env['VAPID_PRIVATE_KEY'];
