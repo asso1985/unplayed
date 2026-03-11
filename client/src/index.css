@@ -70,7 +70,6 @@ body {
 .hdr-sync-btn:disabled { cursor: default; opacity: 0.5; }
 .hdr-sync-btn svg { width: 16px; height: 16px; }
 .hdr-sync-btn.syncing svg { animation: spin .7s linear infinite; }
-.hdr-sync-btn.cooldown { min-width: 28px; }
 
 #content {
   flex: 1;
