@@ -7,7 +7,7 @@ import LogoMark from '@/components/LogoMark';
 type Step = 'choose' | 'ytm' | 'ytm-code' | 'spotify-connecting';
 
 export default function SetupPage() {
-  const { loadStatus, loadAlbums, showToast } = useApp();
+  const { loadStatus, loadAlbums, showToast, setSyncing } = useApp();
   const [step, setStep] = useState<Step>('choose');
   const [loading, setLoading] = useState(false);
   const [userCode, setUserCode] = useState('');
@@ -30,10 +30,14 @@ export default function SetupPage() {
         if (result.status === 'approved') {
           clearInterval(pollRef.current);
           showToast('✓ Connected! Syncing library…');
+          setSyncing(true);
           // loadStatus sets authReady=true → App.tsx navigates to library
           await loadStatus();
           // Fire first sync immediately so albums appear without waiting for cron
-          api.runSync().then(() => loadAlbums()).catch(() => loadAlbums());
+          api.runSync()
+            .then(() => loadAlbums())
+            .catch(() => loadAlbums())
+            .finally(() => setSyncing(false));
         } else if (result.status === 'expired') {
           clearInterval(pollRef.current);
           showToast('Code expired — try again', 'err');
@@ -41,7 +45,7 @@ export default function SetupPage() {
         }
       } catch { /* ignore poll errors */ }
     }, interval * 1000);
-  }, [showToast, loadStatus, loadAlbums]);
+  }, [showToast, loadStatus, loadAlbums, setSyncing]);
 
   const handleYTMStart = useCallback(async () => {
     setLoading(true);
@@ -136,6 +140,7 @@ export default function SetupPage() {
               <div className="setup-card">
                 <h3>Complete sign-in in the popup</h3>
                 <div className="code-block">
+                  <div className="pulse-ring" />
                   <span className="code-hint">Waiting for Spotify sign-in{dots}</span>
                 </div>
                 <p style={{ fontFamily: "'DM Mono', monospace", fontSize: '10px', color: 'var(--muted)', lineHeight: '1.8' }}>

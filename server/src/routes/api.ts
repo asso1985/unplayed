@@ -272,8 +272,32 @@ router.post('/push/subscribe', (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
-// ── Manual cron trigger (for testing) ────────────────────────────────────────
-router.post('/cron/run', async (_req, res: Response) => {
+// ── Per-user sync (auth required) ─────────────────────────────────────────────
+router.post('/sync', async (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  try {
+    const { syncUser } = await import('../scripts/sync-and-remind');
+    const users = db.getAllUsersWithTokens();
+    const user = users.find(u => u.id === userId);
+    if (!user) { res.status(400).json({ error: 'No tokens found' }); return; }
+    await syncUser(user);
+    res.json({ ok: true });
+  } catch (err: unknown) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
+// ── Cron trigger (CRON_SECRET gated) ─────────────────────────────────────────
+router.post('/cron/run', async (req: Request, res: Response) => {
+  const secret = process.env['CRON_SECRET'];
+  if (secret) {
+    const provided = req.headers['x-cron-secret'];
+    if (provided !== secret) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+  }
   try {
     const { main } = await import('../scripts/sync-and-remind');
     await main();

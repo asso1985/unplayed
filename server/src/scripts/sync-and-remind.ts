@@ -24,7 +24,7 @@ interface SyncUser {
   tokens: OAuthTokens;
 }
 
-async function syncUser(user: SyncUser) {
+export async function syncUser(user: SyncUser) {
   // Auto-refresh token if expiring soon (provider-aware)
   let tokens = user.tokens;
   const fresh = user.provider === 'spotify'

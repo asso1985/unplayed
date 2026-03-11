@@ -1,3 +1,7 @@
+// Activate immediately so update notifications reach the client without waiting for tab close
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+
 self.addEventListener('push', e => {
   const d = e.data ? e.data.json() : {};
   e.waitUntil(self.registration.showNotification(d.title || '🎵 Unplayed', {
@@ -6,7 +10,7 @@ self.addEventListener('push', e => {
     badge:   '/icons/icon-72.png',
     data:    { url: d.url, albumId: d.albumId },
     actions: [
-      { action: 'open',    title: '▶ Open in YT Music' },
+      { action: 'open',    title: '▶ Listen now' },
       { action: 'snooze',  title: '⏱ Snooze 3 days' },
       { action: 'silence', title: '✕ Stop reminding' },
     ],

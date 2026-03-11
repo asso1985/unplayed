@@ -8,7 +8,7 @@ import LibraryPage from '@/pages/LibraryPage';
 import SettingsPage from '@/pages/SettingsPage';
 
 export default function App() {
-  const { authReady, loadStatus, loadAlbums } = useApp();
+  const { authReady, loadStatus, loadAlbums, showToast } = useApp();
 
   useEffect(() => {
     loadStatus().then(status => {
@@ -16,7 +16,29 @@ export default function App() {
     });
   }, [loadStatus, loadAlbums]);
 
-  if (authReady === null) return null;
+  // Register SW eagerly on mount for update detection (push also registers, idempotent)
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    navigator.serviceWorker.register('/service-worker.js').then(reg => {
+      reg.addEventListener('updatefound', () => {
+        const newSW = reg.installing;
+        if (!newSW) return;
+        newSW.addEventListener('statechange', () => {
+          if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+            showToast('Update available — tap to refresh', 'ok', () => location.reload());
+          }
+        });
+      });
+    }).catch(() => {});
+  }, [showToast]);
+
+  if (authReady === null) {
+    return (
+      <div style={{ display: 'flex', height: '100dvh', alignItems: 'center', justifyContent: 'center', background: 'var(--bg)' }}>
+        <span className="spin" style={{ width: 28, height: 28, margin: 0 }} />
+      </div>
+    );
+  }
 
   return (
     <>

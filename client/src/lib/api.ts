@@ -37,5 +37,5 @@ export const api = {
   pushSubscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>
     post('/api/push/subscribe', sub),
 
-  runSync: () => post('/api/cron/run'),
+  runSync: () => post('/api/sync'),
 };
