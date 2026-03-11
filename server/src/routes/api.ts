@@ -228,10 +228,11 @@ router.post('/settings', (req: Request, res: Response) => {
   const userId = requireUser(req, res);
   if (!userId) return;
 
-  const { reminderDays, allowedTypes, notifyHour } = req.body as {
+  const { reminderDays, allowedTypes, notifyHour, timezoneOffset } = req.body as {
     reminderDays?: unknown;
     allowedTypes?: unknown;
     notifyHour?: unknown;
+    timezoneOffset?: unknown;
   };
   if (!Array.isArray(reminderDays) || !reminderDays.every(d => typeof d === 'number' && d > 0)) {
     res.status(400).json({ error: 'reminderDays must be an array of positive numbers' });
@@ -250,12 +251,17 @@ router.post('/settings', (req: Request, res: Response) => {
     res.status(400).json({ error: 'notifyHour must be 0-23' });
     return;
   }
+  if (timezoneOffset !== undefined && (typeof timezoneOffset !== 'number' || timezoneOffset < -840 || timezoneOffset > 840)) {
+    res.status(400).json({ error: 'timezoneOffset must be between -840 and 840' });
+    return;
+  }
 
   const current = db.getSettings(userId);
   const updated = {
-    reminderDays: (reminderDays as number[]).slice(0, 5).sort((a, b) => a - b),
-    allowedTypes: allowedTypes as import('../types').ReleaseType[],
-    notifyHour: notifyHour !== undefined ? (notifyHour as number) : current.notifyHour,
+    reminderDays:   (reminderDays as number[]).slice(0, 5).sort((a, b) => a - b),
+    allowedTypes:   allowedTypes as import('../types').ReleaseType[],
+    notifyHour:     notifyHour !== undefined ? (notifyHour as number) : current.notifyHour,
+    timezoneOffset: timezoneOffset !== undefined ? (timezoneOffset as number) : current.timezoneOffset,
   };
   db.upsertSettings(userId, updated);
   res.json({ ok: true, settings: updated });

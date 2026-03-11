@@ -1,8 +1,14 @@
 import { useApp } from '@/hooks/useAppState';
+import type { Album } from '@/types';
 import AlbumCard from './AlbumCard';
 
-export default function AlbumGrid() {
-  const { albums, settings, provider, syncing } = useApp();
+interface Props {
+  albums?: Album[]; // if provided, overrides context albums (used for sorted views)
+}
+
+export default function AlbumGrid({ albums: propAlbums }: Props) {
+  const { albums: ctxAlbums, settings, provider, syncing } = useApp();
+  const albums = propAlbums ?? ctxAlbums;
 
   if (!albums.length) {
     if (syncing) {

@@ -27,9 +27,10 @@ interface AppState {
 }
 
 const DEFAULT_SETTINGS: Settings = {
-  reminderDays: [1, 3, 7, 30],
-  allowedTypes: ['Album'],
-  notifyHour: 19,
+  reminderDays:   [1, 3, 7, 30],
+  allowedTypes:   ['Album'],
+  notifyHour:     19,
+  timezoneOffset: 0,
 };
 
 const AppContext = createContext<AppState | null>(null);

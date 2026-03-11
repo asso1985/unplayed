@@ -29,7 +29,8 @@ export default function SettingsPage() {
     if (!allowedTypes.length) { showToast('Select at least one type', 'err'); return; }
 
     try {
-      const result = await api.saveSettings({ reminderDays: days, allowedTypes, notifyHour });
+      const timezoneOffset = new Date().getTimezoneOffset();
+      const result = await api.saveSettings({ reminderDays: days, allowedTypes, notifyHour, timezoneOffset });
       setSettings(result.settings);
       showToast('✓ Settings saved');
     } catch (e) {

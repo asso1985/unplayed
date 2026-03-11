@@ -67,8 +67,10 @@ body {
   transition: color .12s;
 }
 .hdr-sync-btn:active { color: var(--accent); }
+.hdr-sync-btn:disabled { cursor: default; opacity: 0.5; }
 .hdr-sync-btn svg { width: 16px; height: 16px; }
 .hdr-sync-btn.syncing svg { animation: spin .7s linear infinite; }
+.hdr-sync-btn.cooldown { min-width: 28px; }
 
 #content {
   flex: 1;
@@ -116,6 +118,15 @@ body {
 .lib-content { padding: 14px 14px 24px; }
 .lib-count { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); }
 .lib-count strong { font-size: 20px; font-family: 'Syne', sans-serif; font-weight: 800; color: var(--accent); margin-right: 3px; }
+
+.sort-select {
+  background: var(--surf2); border: 1px solid var(--border); border-radius: 8px;
+  color: var(--muted); font-family: 'DM Mono', monospace; font-size: 10px;
+  padding: 4px 8px; cursor: pointer; outline: none;
+  -webkit-appearance: none; appearance: none;
+  transition: border-color .12s, color .12s;
+}
+.sort-select:focus, .sort-select:hover { border-color: var(--accent); color: var(--text); }
 
 .notice {
   display: flex; align-items: center; gap: 10px;

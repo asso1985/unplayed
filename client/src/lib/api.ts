@@ -31,7 +31,7 @@ export const api = {
   snoozeAlbum:  (id: string, days: number) => post(`/api/albums/${id}/snooze`, { days }),
   silenceAlbum: (id: string) => post(`/api/albums/${id}/silence`),
 
-  saveSettings: (s: { reminderDays: number[]; allowedTypes: string[]; notifyHour: number }) =>
+  saveSettings: (s: { reminderDays: number[]; allowedTypes: string[]; notifyHour: number; timezoneOffset: number }) =>
     post<{ ok: boolean; settings: Settings }>('/api/settings', s),
 
   pushSubscribe: (sub: { endpoint: string; keys: { p256dh: string; auth: string } }) =>

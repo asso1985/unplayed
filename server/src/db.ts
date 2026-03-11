@@ -45,10 +45,11 @@ sqlite.exec(`
   );
 
   CREATE TABLE IF NOT EXISTS settings (
-    user_id       TEXT PRIMARY KEY REFERENCES users(id),
-    reminder_days TEXT NOT NULL DEFAULT '[1,3,7,30]',
-    allowed_types TEXT NOT NULL DEFAULT '["Album"]',
-    notify_hour   INTEGER NOT NULL DEFAULT 19
+    user_id          TEXT PRIMARY KEY REFERENCES users(id),
+    reminder_days    TEXT    NOT NULL DEFAULT '[1,3,7,30]',
+    allowed_types    TEXT    NOT NULL DEFAULT '["Album"]',
+    notify_hour      INTEGER NOT NULL DEFAULT 19,
+    timezone_offset  INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS push_subs (
@@ -88,6 +89,23 @@ if (!sessCols.includes('oauth_expires_at')) {
 
 // Migrate old default reminder_days [3,7,30] → [1,3,7,30]
 sqlite.exec(`UPDATE settings SET reminder_days = '[1,3,7,30]' WHERE reminder_days = '[3,7,30]'`);
+
+// Add timezone_offset column if it doesn't exist yet
+const settingsCols = (sqlite.pragma('table_info(settings)') as { name: string }[]).map(c => c.name);
+if (!settingsCols.includes('timezone_offset')) {
+  sqlite.exec('ALTER TABLE settings ADD COLUMN timezone_offset INTEGER NOT NULL DEFAULT 0');
+}
+
+// Migrate old UTC-based notifyHour values (7→8, 13→14, 18→19) to local-hour representation
+sqlite.exec(`
+  UPDATE settings SET notify_hour = CASE notify_hour
+    WHEN 7  THEN 8
+    WHEN 13 THEN 14
+    WHEN 18 THEN 19
+    ELSE notify_hour
+  END
+  WHERE notify_hour IN (7, 13, 18)
+`);
 
 // ── Users ──────────────────────────────────────────────────────────────────────
 
@@ -318,23 +336,25 @@ const _getSettings = sqlite.prepare(
 
 export function getSettings(userId: string): Settings {
   const row = _getSettings.get(userId) as {
-    reminder_days: string; allowed_types: string; notify_hour: number;
+    reminder_days: string; allowed_types: string; notify_hour: number; timezone_offset: number;
   } | undefined;
   if (!row) return { ...DEFAULT_SETTINGS };
   return {
-    reminderDays: JSON.parse(row.reminder_days) as number[],
-    allowedTypes: JSON.parse(row.allowed_types) as ReleaseType[],
-    notifyHour: row.notify_hour,
+    reminderDays:   JSON.parse(row.reminder_days) as number[],
+    allowedTypes:   JSON.parse(row.allowed_types) as ReleaseType[],
+    notifyHour:     row.notify_hour,
+    timezoneOffset: row.timezone_offset ?? 0,
   };
 }
 
 const _upsertSettings = sqlite.prepare(`
-  INSERT INTO settings (user_id, reminder_days, allowed_types, notify_hour)
-  VALUES (?, ?, ?, ?)
+  INSERT INTO settings (user_id, reminder_days, allowed_types, notify_hour, timezone_offset)
+  VALUES (?, ?, ?, ?, ?)
   ON CONFLICT(user_id) DO UPDATE SET
-    reminder_days = excluded.reminder_days,
-    allowed_types = excluded.allowed_types,
-    notify_hour   = excluded.notify_hour
+    reminder_days   = excluded.reminder_days,
+    allowed_types   = excluded.allowed_types,
+    notify_hour     = excluded.notify_hour,
+    timezone_offset = excluded.timezone_offset
 `);
 
 export function upsertSettings(userId: string, s: Settings): void {
@@ -343,6 +363,7 @@ export function upsertSettings(userId: string, s: Settings): void {
     JSON.stringify(s.reminderDays),
     JSON.stringify(s.allowedTypes),
     s.notifyHour,
+    s.timezoneOffset ?? 0,
   );
 }
 

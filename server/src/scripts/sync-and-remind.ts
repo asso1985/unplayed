@@ -105,14 +105,17 @@ async function main() {
       }
     }
 
-    // Reminders — only if current UTC hour matches user's notifyHour
-    const currentHour = new Date().getUTCHours();
-    const notifyHour = db.getSettings(user.id).notifyHour ?? 19;
-    if (currentHour === notifyHour) {
+    // Reminders — only if current local hour (per user's timezone) matches notifyHour
+    const utcHour = new Date().getUTCHours();
+    const settings = db.getSettings(user.id);
+    const tzOffset = settings.timezoneOffset ?? 0; // minutes west of UTC
+    // Convert UTC to user's local hour (handles fractional-hour timezones, e.g. India UTC+5:30)
+    const localHour = Math.floor(((utcHour * 60 - tzOffset) % 1440 + 1440) % 1440 / 60);
+    if (localHour === settings.notifyHour) {
       const { sent, skipped } = await runRemindersForUser(user.id);
       console.log(`  ✓ Reminders — ${sent} sent, ${skipped} skipped`);
     } else {
-      console.log(`  ✓ Reminders — skipped (current=${currentHour} UTC, notify=${notifyHour} UTC)`);
+      console.log(`  ✓ Reminders — skipped (local=${localHour}, notify=${settings.notifyHour})`);
     }
   }
 }

@@ -19,7 +19,8 @@ export interface Album {
 export interface Settings {
   reminderDays: number[];
   allowedTypes: ReleaseType[];
-  notifyHour: number;
+  notifyHour: number;       // desired LOCAL hour (0-23)
+  timezoneOffset: number;   // minutes west of UTC from getTimezoneOffset()
 }
 
 export interface StatusResponse {

@@ -3,7 +3,7 @@ export type Provider = 'youtube' | 'spotify';
 
 
 export interface Album {
-  id: string;           // YTM browseId
+  id: string;           // YTM browseId / Spotify album ID
   title: string;
   artist: string;
   year: string;
@@ -16,11 +16,6 @@ export interface Album {
   remindersSent: number[];      // days-since-saved at which we already fired
 }
 
-export interface Settings {
-  reminderDays: number[];           // e.g. [3, 7, 30]
-  allowedTypes: ReleaseType[];      // which release types to remind about
-}
-
 export interface PushSub {
   endpoint: string;
   keys: { p256dh: string; auth: string };
@@ -29,11 +24,13 @@ export interface PushSub {
 export interface Settings {
   reminderDays: number[];
   allowedTypes: ReleaseType[];
-  notifyHour: number;
+  notifyHour: number;       // desired LOCAL hour (0-23), e.g. 19 = 7 PM local time
+  timezoneOffset: number;   // minutes west of UTC (from getTimezoneOffset()), e.g. 300 for EST
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  reminderDays:  [1, 3, 7, 30],
-  allowedTypes:  ['Album'],
-  notifyHour:    19,
+  reminderDays:   [1, 3, 7, 30],
+  allowedTypes:   ['Album'],
+  notifyHour:     19,
+  timezoneOffset: 0,
 };
