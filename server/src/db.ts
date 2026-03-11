@@ -46,7 +46,7 @@ sqlite.exec(`
 
   CREATE TABLE IF NOT EXISTS settings (
     user_id       TEXT PRIMARY KEY REFERENCES users(id),
-    reminder_days TEXT NOT NULL DEFAULT '[3,7,30]',
+    reminder_days TEXT NOT NULL DEFAULT '[1,3,7,30]',
     allowed_types TEXT NOT NULL DEFAULT '["Album"]',
     notify_hour   INTEGER NOT NULL DEFAULT 19
   );

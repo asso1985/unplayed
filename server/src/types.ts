@@ -33,7 +33,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  reminderDays:  [3, 7, 30],
+  reminderDays:  [1, 3, 7, 30],
   allowedTypes:  ['Album'],
   notifyHour:    19,
 };
