@@ -86,6 +86,9 @@ if (!sessCols.includes('oauth_expires_at')) {
   sqlite.exec('ALTER TABLE sessions ADD COLUMN oauth_expires_at TEXT');
 }
 
+// Migrate old default reminder_days [3,7,30] → [1,3,7,30]
+sqlite.exec(`UPDATE settings SET reminder_days = '[1,3,7,30]' WHERE reminder_days = '[3,7,30]'`);
+
 // ── Users ──────────────────────────────────────────────────────────────────────
 
 const _insertUser = sqlite.prepare(
