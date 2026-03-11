@@ -38,15 +38,20 @@ export default function LibraryPage() {
           <strong>{albums.length}</strong> albums
         </div>
         {albums.length > 1 && (
-          <select
-            className="sort-select"
-            value={sortOrder}
-            onChange={e => setSortOrder(e.target.value as SortOrder)}
-          >
-            {SORT_OPTIONS.map(o => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+          <div className="sort-wrap">
+            <svg className="sort-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M2 4h12M4 8h8M6 12h4"/>
+            </svg>
+            <select
+              className="sort-select"
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value as SortOrder)}
+            >
+              {SORT_OPTIONS.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
         )}
       </Flex>
       <AlbumGrid albums={sortedAlbums} />
