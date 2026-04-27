@@ -94,7 +94,9 @@ async function main() {
       // If auth error, clear the invalid tokens and notify the user to re-authenticate.
       // Deleting tokens means the UI will show the login screen on next visit instead
       // of silently failing every 6 hours with the same invalid_grant error.
-      if (msg.includes('401') || msg.includes('403') || msg.includes('invalid_grant')) {
+      const isAuthError = msg.includes('401') || msg.includes('403') || msg.includes('invalid_grant');
+      console.log(`  isAuthError=${isAuthError} (matched on: ${msg.slice(0, 120)})`);
+      if (isAuthError) {
         console.log(`  Auth error — clearing tokens and sending push to re-authenticate`);
         db.deleteTokens(user.id);
         await sendPush(

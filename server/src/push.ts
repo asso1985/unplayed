@@ -4,7 +4,10 @@ import { Album } from './types';
 
 export async function sendDigestPush(userId: string, count: number): Promise<void> {
   const subs = db.getPushSubs(userId);
-  if (!subs.length) return;
+  if (!subs.length) {
+    console.log(`  ⚠️  sendDigestPush(${userId}): no push subscriptions — skipping`);
+    return;
+  }
 
   const payload = JSON.stringify({
     title:   `📀 ${count} albums need a listen`,
@@ -32,6 +35,7 @@ export function initPush(): void {
   const mail = process.env['VAPID_EMAIL'] ?? 'mailto:admin@example.com';
   if (!pub || !priv) { console.warn('⚠️  VAPID keys not set — push disabled'); return; }
   webpush.setVapidDetails(mail, pub, priv);
+  console.log('✓ Push initialized (VAPID configured)');
 }
 
 export async function sendPush(
@@ -41,7 +45,10 @@ export async function sendPush(
   body: string
 ): Promise<void> {
   const subs = db.getPushSubs(userId);
-  if (!subs.length) return;
+  if (!subs.length) {
+    console.log(`  ⚠️  sendPush(${userId}): no push subscriptions — "${title}" not delivered`);
+    return;
+  }
 
   const provider = db.getUserProvider(userId);
   const url = provider === 'spotify'
@@ -57,9 +64,11 @@ export async function sendPush(
   });
 
   const dead: string[] = [];
+  let sent = 0;
   await Promise.allSettled(subs.map(async sub => {
     try {
       await webpush.sendNotification(sub, payload);
+      sent++;
     } catch (err: unknown) {
       const status = (err as { statusCode?: number }).statusCode;
       if (status === 404 || status === 410) dead.push(sub.endpoint);
@@ -67,4 +76,5 @@ export async function sendPush(
     }
   }));
   dead.forEach(ep => db.removePushSub(ep));
+  console.log(`  ✓ sendPush(${userId}): "${title}" — ${sent}/${subs.length} delivered, ${dead.length} dead`);
 }
