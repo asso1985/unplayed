@@ -326,3 +326,39 @@ router.post('/push/test', async (req: Request, res: Response) => {
   await sendPush(userId, fakeAlbum, '🎵 Test notification', 'Unplayed push notifications are working!');
   res.json({ ok: true });
 });
+
+// ── Direct push test (CRON_SECRET gated) ─────────────────────────────────────
+router.post('/push/send', async (req: Request, res: Response) => {
+  const secret = process.env['CRON_SECRET'];
+  if (secret) {
+    const provided = req.headers['x-cron-secret'];
+    if (provided !== secret) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+  }
+
+  const { subscription, title, body } = req.body as {
+    subscription?: { endpoint?: string; keys?: { p256dh?: string; auth?: string } };
+    title?: string;
+    body?: string;
+  };
+
+  if (!subscription?.endpoint || !subscription?.keys?.p256dh || !subscription?.keys?.auth) {
+    res.status(400).json({ error: 'subscription.endpoint, subscription.keys.p256dh, and subscription.keys.auth are required' });
+    return;
+  }
+
+  try {
+    const { sendDirectPush } = await import('../push');
+    await sendDirectPush(
+      { endpoint: subscription.endpoint, keys: { p256dh: subscription.keys.p256dh, auth: subscription.keys.auth } },
+      title ?? '🔔 Test notification',
+      body ?? 'Unplayed push notifications are working!',
+    );
+    res.json({ ok: true });
+  } catch (err: unknown) {
+    const status = (err as { statusCode?: number }).statusCode;
+    res.status(502).json({ error: `Push delivery failed`, statusCode: status });
+  }
+});
