@@ -104,7 +104,7 @@ export async function syncUser(user: SyncUser): Promise<SyncResult> {
 
   db.setLastSync(user.id, new Date().toISOString());
   console.log(`  ✓ Sync [${user.provider}] — ${added} new, ${fetched.length} total in library`);
-  return { added, fetchedCount: fetched.length, items };
+  return { added, fetchedCount: fetched.length, items, ytmDebug };
 }
 
 async function main() {
