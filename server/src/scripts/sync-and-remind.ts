@@ -24,7 +24,19 @@ interface SyncUser {
   tokens: OAuthTokens;
 }
 
-export async function syncUser(user: SyncUser) {
+export interface SyncResult {
+  added: number;
+  fetchedCount: number;
+  items: Array<{
+    id: string;
+    title: string;
+    artist: string;
+    releaseType: string;
+    status: 'added' | 'exists' | 'filtered-type';
+  }>;
+}
+
+export async function syncUser(user: SyncUser): Promise<SyncResult> {
   // Auto-refresh token if expiring soon (provider-aware)
   let tokens = user.tokens;
   const fresh = user.provider === 'spotify'
@@ -43,15 +55,22 @@ export async function syncUser(user: SyncUser) {
     : await getYTMLibraryAlbums(tokens.accessToken);
 
   const settings = db.getSettings(user.id);
+  const items: SyncResult['items'] = [];
   let added = 0;
 
   for (const item of fetched) {
     // Both YTMAlbum and SpotifyAlbum expose: id (or browseId), title, artist, year, thumbnail, releaseType
     const albumId = 'browseId' in item ? item.browseId : item.id;
 
-    if (db.albumExists(user.id, albumId)) continue;
+    if (db.albumExists(user.id, albumId)) {
+      items.push({ id: albumId, title: item.title, artist: item.artist, releaseType: item.releaseType, status: 'exists' });
+      continue;
+    }
     // Respect allowed release types
-    if (item.releaseType !== 'Unknown' && !settings.allowedTypes.includes(item.releaseType)) continue;
+    if (item.releaseType !== 'Unknown' && !settings.allowedTypes.includes(item.releaseType)) {
+      items.push({ id: albumId, title: item.title, artist: item.artist, releaseType: item.releaseType, status: 'filtered-type' });
+      continue;
+    }
 
     const album: Album = {
       id:            albumId,
@@ -66,11 +85,13 @@ export async function syncUser(user: SyncUser) {
       remindersSent: [],
     };
     db.insertAlbum(user.id, album);
+    items.push({ id: albumId, title: item.title, artist: item.artist, releaseType: item.releaseType, status: 'added' });
     added++;
   }
 
   db.setLastSync(user.id, new Date().toISOString());
   console.log(`  ✓ Sync [${user.provider}] — ${added} new, ${fetched.length} total in library`);
+  return { added, fetchedCount: fetched.length, items };
 }
 
 async function main() {
