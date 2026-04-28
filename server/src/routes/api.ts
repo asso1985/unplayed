@@ -278,6 +278,29 @@ router.post('/push/subscribe', (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+// ── Debug: probe alternative YT InnerTube clients ────────────────────────────
+// Hits FEmusic_liked_albums with several client configs and reports the shape
+// each one returned, so we can pick a client that returns the full library
+// instead of the truncated TVHTML5 view.
+router.post('/debug/ytm-clients', async (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  try {
+    const tokens = db.getTokens(userId);
+    if (!tokens) { res.status(400).json({ error: 'No tokens found' }); return; }
+    const provider = db.getUserProvider(userId);
+    if (provider !== 'youtube') { res.status(400).json({ error: 'YTM-only debug' }); return; }
+    const { getValidAccessToken } = await import('../oauth');
+    const fresh = await getValidAccessToken(tokens);
+    if (fresh.accessToken !== tokens.accessToken) db.upsertTokens(userId, fresh);
+    const { probeClients } = await import('../ytmusic-debug');
+    const results = await probeClients(fresh.accessToken);
+    res.json({ ok: true, results });
+  } catch (err: unknown) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 // ── Per-user sync (auth required) ─────────────────────────────────────────────
 router.post('/sync', async (req: Request, res: Response) => {
   const userId = requireUser(req, res);
