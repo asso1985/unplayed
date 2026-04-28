@@ -96,8 +96,10 @@ export async function getLibraryAlbums(
     if (!res.ok) throw new Error(`YTM API error: ${res.status} ${res.statusText}`);
     const json = await res.json() as unknown;
 
-    // First page: navigate to the Albums tab (selected:true) gridRenderer items
+    // First page: navigate to the Albums tab (selected:true) gridRenderer.
+    // Continuation pages: items live under continuationContents.gridContinuation.
     let items: unknown[] = [];
+    let gridForContinuation: unknown = null;
     if (!continuation) {
       const sections = nav(json, 'contents', 'tvBrowseRenderer', 'content',
         'tvSecondaryNavRenderer', 'sections', 0,
@@ -108,16 +110,18 @@ export async function getLibraryAlbums(
           const selected = nav(tab, 'tabRenderer', 'selected');
           if (selected) {
             const grid = nav(tab, 'tabRenderer', 'content', 'tvSurfaceContentRenderer',
-              'content', 'gridRenderer', 'items');
-            if (Array.isArray(grid)) items = grid;
+              'content', 'gridRenderer');
+            const gridItems = nav(grid, 'items');
+            if (Array.isArray(gridItems)) items = gridItems;
+            gridForContinuation = grid;
             break;
           }
         }
       }
     } else {
-      // Continuation page
-      const grid = nav(json, 'continuationContents', 'gridContinuation', 'items');
-      if (Array.isArray(grid)) items = grid;
+      gridForContinuation = nav(json, 'continuationContents', 'gridContinuation');
+      const gridItems = nav(gridForContinuation, 'items');
+      if (Array.isArray(gridItems)) items = gridItems;
     }
 
     for (const item of items) {
@@ -127,13 +131,9 @@ export async function getLibraryAlbums(
       if (parsed) albums.push(parsed);
     }
 
-    // Check for next page
-    const token = nav(json,
-      'continuations', 0, 'nextContinuationData', 'continuation'
-    ) ?? nav(json,
-      'continuationContents', 'gridContinuation', 'continuations', 0,
-      'nextContinuationData', 'continuation'
-    );
+    // Continuation token lives inside the grid (works for both first page and
+    // continuation pages, since gridRenderer and gridContinuation share this shape).
+    const token = nav(gridForContinuation, 'continuations', 0, 'nextContinuationData', 'continuation');
     continuation = typeof token === 'string' ? token : null;
 
   } while (continuation && albums.length < maxAlbums);
