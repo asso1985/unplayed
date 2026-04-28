@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef, type ReactNode } from 'react';
 import type { Album, Settings, StatusResponse, Provider, BeforeInstallPromptEvent } from '@/types';
 import { api } from '@/lib/api';
+import { ensurePushSubscription } from '@/lib/push';
 
 interface Toast { message: string; type: 'ok' | 'err'; onClick?: () => void }
 
@@ -68,6 +69,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setAlbums(data.albums);
     setSettings(data.settings);
   }, []);
+
+  useEffect(() => {
+    if (authReady && vapidKey) ensurePushSubscription(vapidKey);
+  }, [authReady, vapidKey]);
 
   useEffect(() => {
     const handler = (e: BeforeInstallPromptEvent) => {
