@@ -59,11 +59,28 @@ function parseTileRenderer(tile: unknown): YTMAlbum | null {
   }
 }
 
+export interface YTMLibraryDebug {
+  pages: number;
+  itemsPerPage: number[];
+  lastPageRootKeys: string[];
+  lastPageGridKeys: string[];
+  lastPageHadGrid: boolean;
+}
+
+export interface YTMLibraryResult {
+  albums: YTMAlbum[];
+  debug: YTMLibraryDebug;
+}
+
+function objectKeys(v: unknown): string[] {
+  return v && typeof v === 'object' ? Object.keys(v as Record<string, unknown>) : [];
+}
+
 /** Fetch all saved/liked albums from the user's YT Music library */
 export async function getLibraryAlbums(
   accessToken: string,
   maxAlbums = 200
-): Promise<YTMAlbum[]> {
+): Promise<YTMLibraryResult> {
   const context = {
     client: {
       clientName: 'TVHTML5',
@@ -82,6 +99,11 @@ export async function getLibraryAlbums(
 
   const albums: YTMAlbum[] = [];
   let continuation: string | null = null;
+  let pages = 0;
+  const itemsPerPage: number[] = [];
+  let lastPageRootKeys: string[] = [];
+  let lastPageGridKeys: string[] = [];
+  let lastPageHadGrid = false;
 
   do {
     const body: Record<string, unknown> = { context, browseId: 'FEmusic_liked_albums' };
@@ -131,6 +153,12 @@ export async function getLibraryAlbums(
       if (parsed) albums.push(parsed);
     }
 
+    pages++;
+    itemsPerPage.push(items.length);
+    lastPageRootKeys = objectKeys(json);
+    lastPageGridKeys = objectKeys(gridForContinuation);
+    lastPageHadGrid = gridForContinuation != null;
+
     // Continuation token lives inside the grid (works for both first page and
     // continuation pages, since gridRenderer and gridContinuation share this shape).
     const token = nav(gridForContinuation, 'continuations', 0, 'nextContinuationData', 'continuation');
@@ -138,5 +166,8 @@ export async function getLibraryAlbums(
 
   } while (continuation && albums.length < maxAlbums);
 
-  return albums;
+  return {
+    albums,
+    debug: { pages, itemsPerPage, lastPageRootKeys, lastPageGridKeys, lastPageHadGrid },
+  };
 }
