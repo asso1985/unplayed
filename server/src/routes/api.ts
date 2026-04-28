@@ -287,8 +287,8 @@ router.post('/sync', async (req: Request, res: Response) => {
     const users = db.getAllUsersWithTokens();
     const user = users.find(u => u.id === userId);
     if (!user) { res.status(400).json({ error: 'No tokens found' }); return; }
-    await syncUser(user);
-    res.json({ ok: true });
+    const result = await syncUser(user);
+    res.json({ ok: true, ...result });
   } catch (err: unknown) {
     res.status(500).json({ error: (err as Error).message });
   }
