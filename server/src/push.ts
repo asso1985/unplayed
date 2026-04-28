@@ -38,6 +38,24 @@ export function initPush(): void {
   console.log('✓ Push initialized (VAPID configured)');
 }
 
+export async function sendDirectPush(
+  subscription: { endpoint: string; keys: { p256dh: string; auth: string } },
+  title: string,
+  body: string,
+): Promise<void> {
+  const payload = JSON.stringify({
+    title,
+    body,
+    icon:    '/icons/icon-192.png',
+    url:     '/',
+    albumId: '',
+  });
+  await webpush.sendNotification(
+    { endpoint: subscription.endpoint, keys: subscription.keys },
+    payload,
+  );
+}
+
 export async function sendPush(
   userId: string,
   album: Album,
