@@ -8,8 +8,8 @@
  *   4. Fires any due push notifications
  */
 import * as db from '../db';
-import { getLibraryAlbums as getYTMLibraryAlbums } from '../ytmusic';
-import { getSpotifyLibraryAlbums, getValidSpotifyToken } from '../spotify';
+import { getLibraryAlbums as getYTMLibraryAlbums, type YTMAlbum } from '../ytmusic';
+import { getSpotifyLibraryAlbums, getValidSpotifyToken, type SpotifyAlbum } from '../spotify';
 import { initPush, sendPush } from '../push';
 import { runRemindersForUser } from '../reminders';
 import { getValidAccessToken } from '../oauth';
@@ -34,6 +34,13 @@ export interface SyncResult {
     releaseType: string;
     status: 'added' | 'exists' | 'filtered-type';
   }>;
+  ytmDebug?: {
+    pages: number;
+    itemsPerPage: number[];
+    lastPageRootKeys: string[];
+    lastPageGridKeys: string[];
+    lastPageHadGrid: boolean;
+  };
 }
 
 export async function syncUser(user: SyncUser): Promise<SyncResult> {
@@ -50,9 +57,15 @@ export async function syncUser(user: SyncUser): Promise<SyncResult> {
   }
 
   // Fetch library (provider-aware)
-  const fetched = user.provider === 'spotify'
-    ? await getSpotifyLibraryAlbums(tokens.accessToken)
-    : await getYTMLibraryAlbums(tokens.accessToken);
+  let ytmDebug: SyncResult['ytmDebug'];
+  let fetched: YTMAlbum[] | SpotifyAlbum[];
+  if (user.provider === 'spotify') {
+    fetched = await getSpotifyLibraryAlbums(tokens.accessToken);
+  } else {
+    const result = await getYTMLibraryAlbums(tokens.accessToken);
+    fetched = result.albums;
+    ytmDebug = result.debug;
+  }
 
   const settings = db.getSettings(user.id);
   const items: SyncResult['items'] = [];
