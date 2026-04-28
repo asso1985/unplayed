@@ -288,13 +288,17 @@ router.get('/debug/whoami', async (req: Request, res: Response) => {
     const { getValidAccessToken } = await import('../oauth');
     const fresh = await getValidAccessToken(tokens);
     if (fresh.accessToken !== tokens.accessToken) db.upsertTokens(userId, fresh);
-    const r = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
-      headers: { Authorization: `Bearer ${fresh.accessToken}` },
-    });
+    // Token only has youtube scope, so OIDC userinfo refuses it.
+    // youtube/v3/channels?mine=true works with the youtube scope and returns
+    // the YouTube channel(s) tied to this token — enough to identify the account.
+    const r = await fetch(
+      'https://www.googleapis.com/youtube/v3/channels?part=snippet&mine=true',
+      { headers: { Authorization: `Bearer ${fresh.accessToken}` } },
+    );
     const body = await r.text();
     let parsed: unknown;
     try { parsed = JSON.parse(body); } catch { parsed = body; }
-    res.json({ ok: true, status: r.status, userinfo: parsed });
+    res.json({ ok: true, status: r.status, channels: parsed });
   } catch (err: unknown) {
     res.status(500).json({ error: (err as Error).message });
   }
