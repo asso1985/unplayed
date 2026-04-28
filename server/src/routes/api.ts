@@ -278,6 +278,28 @@ router.post('/push/subscribe', (req: Request, res: Response) => {
   res.json({ ok: true });
 });
 
+// ── Debug: which Google account does the OAuth token belong to? ──────────────
+router.get('/debug/whoami', async (req: Request, res: Response) => {
+  const userId = requireUser(req, res);
+  if (!userId) return;
+  try {
+    const tokens = db.getTokens(userId);
+    if (!tokens) { res.status(400).json({ error: 'No tokens found' }); return; }
+    const { getValidAccessToken } = await import('../oauth');
+    const fresh = await getValidAccessToken(tokens);
+    if (fresh.accessToken !== tokens.accessToken) db.upsertTokens(userId, fresh);
+    const r = await fetch('https://openidconnect.googleapis.com/v1/userinfo', {
+      headers: { Authorization: `Bearer ${fresh.accessToken}` },
+    });
+    const body = await r.text();
+    let parsed: unknown;
+    try { parsed = JSON.parse(body); } catch { parsed = body; }
+    res.json({ ok: true, status: r.status, userinfo: parsed });
+  } catch (err: unknown) {
+    res.status(500).json({ error: (err as Error).message });
+  }
+});
+
 // ── Debug: probe alternative YT InnerTube clients ────────────────────────────
 // Hits FEmusic_liked_albums with several client configs and reports the shape
 // each one returned, so we can pick a client that returns the full library
